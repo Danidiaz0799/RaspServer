@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import sqlite3
 
 # Funcion para crear las tablas en la base de datos
@@ -87,6 +88,7 @@ def create_tables():
         c.execute("ALTER TABLE clients ADD COLUMN manually_disabled INTEGER DEFAULT 0")
         print("Columna manually_disabled anadida a la tabla clients")
 
+    # Verificaciones e inserciones en una sola transaccion
     # Insertar cliente predeterminado si no existe
     c.execute('SELECT COUNT(*) FROM clients WHERE client_id = "mushroom1"')
     if c.fetchone()[0] == 0:
@@ -155,9 +157,18 @@ def create_tables():
         ''')
         print("Estado inicial de la aplicacion insertado.")
 
+    # Crear indices para mejorar el rendimiento de consultas frecuentes
+    c.execute('CREATE INDEX IF NOT EXISTS idx_sht3x_client_timestamp ON sht3x_data(client_id, timestamp)')
+    c.execute('CREATE INDEX IF NOT EXISTS idx_events_client_timestamp ON events(client_id, timestamp)')
+    c.execute('CREATE INDEX IF NOT EXISTS idx_actuators_client_name ON actuators(client_id, name)')
+    c.execute('CREATE INDEX IF NOT EXISTS idx_ideal_params_client_type ON ideal_params(client_id, param_type)')
+    
+    # Optimizar la base de datos
+    c.execute('PRAGMA optimize')
+
     conn.commit()
     conn.close()
-    print("Base de datos creada y tablas inicializadas.")
+    print("Base de datos creada, tablas inicializadas y optimizadas.")
 
 # Ejecutar la funcion para crear las tablas si el archivo se ejecuta directamente
 if __name__ == '__main__':
