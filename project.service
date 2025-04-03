@@ -1,0 +1,15 @@
+[Unit]
+Description=Proyecto Grado UD Flask App
+After=network.target
+
+[Service]
+User=root
+WorkingDirectory=/home/stevpi/Desktop/raspServer
+ExecStart=/bin/bash -c 'source /home/stevpi/venv/bin/activate && python3 /home/stevpi/Desktop/raspServer/app.py'
+Restart=always
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=raspServer
+
+[Install]
+WantedBy=multi-user.target
