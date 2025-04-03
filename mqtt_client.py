@@ -163,32 +163,39 @@ async def update_actuators(client_id, temperature, humidity):
         if not all([light_actuator, fan_actuator, humidifier_actuator, motor_actuator]):
             return
         
-        # Acciones en paralelo para temperatura
-        temperature_tasks = []
-        if temperature < min_temp:
-            temperature_tasks.append(update_actuator_and_log(client_id, light_actuator['id'], 'true', "Temperatura baja", f'clients/{client_id}/light'))
-            temperature_tasks.append(update_actuator_and_log(client_id, fan_actuator['id'], 'false', "Ventilador apagado", f'clients/{client_id}/fan'))
-        elif temperature > max_temp:
-            temperature_tasks.append(update_actuator_and_log(client_id, light_actuator['id'], 'false', "Temperatura alta", f'clients/{client_id}/light'))
-            temperature_tasks.append(update_actuator_and_log(client_id, fan_actuator['id'], 'true', "Ventilador encendido", f'clients/{client_id}/fan'))
-        else:
-            temperature_tasks.append(update_actuator_and_log(client_id, light_actuator['id'], 'false', "Temperatura normal", f'clients/{client_id}/light'))
-            temperature_tasks.append(update_actuator_and_log(client_id, fan_actuator['id'], 'false', "Ventilador apagado", f'clients/{client_id}/fan'))
+        # Lista para todas las tareas de actualización
+        all_tasks = []
         
-        # Acciones en paralelo para humedad
-        humidity_tasks = []
-        if humidity < min_humidity:
-            humidity_tasks.append(update_actuator_and_log(client_id, humidifier_actuator['id'], 'true', "Humedad baja", f'clients/{client_id}/humidifier'))
-            humidity_tasks.append(update_actuator_and_log(client_id, motor_actuator['id'], 'false', "Motor apagado", f'clients/{client_id}/motor'))
-        elif humidity > max_humidity:
-            humidity_tasks.append(update_actuator_and_log(client_id, humidifier_actuator['id'], 'false', "Humedad alta", f'clients/{client_id}/humidifier'))
-            humidity_tasks.append(update_actuator_and_log(client_id, motor_actuator['id'], 'true', "Motor encendido", f'clients/{client_id}/motor'))
+        # Acciones para temperatura
+        if temperature < min_temp:
+            # Temperatura baja: encender luz
+            all_tasks.append(update_actuator_and_log(client_id, light_actuator['id'], 'true', "Temperatura baja, encendiendo luz", f'clients/{client_id}/light'))
+            all_tasks.append(update_actuator_and_log(client_id, fan_actuator['id'], 'false', "Ventilador apagado", f'clients/{client_id}/fan'))
+        elif temperature > max_temp:
+            # Temperatura alta: encender ventilador
+            all_tasks.append(update_actuator_and_log(client_id, light_actuator['id'], 'false', "Luz apagada", f'clients/{client_id}/light'))
+            all_tasks.append(update_actuator_and_log(client_id, fan_actuator['id'], 'true', "Temperatura alta, encendiendo ventilador", f'clients/{client_id}/fan'))
         else:
-            humidity_tasks.append(update_actuator_and_log(client_id, humidifier_actuator['id'], 'false', "Humedad normal", f'clients/{client_id}/humidifier'))
-            humidity_tasks.append(update_actuator_and_log(client_id, motor_actuator['id'], 'false', "Motor apagado", f'clients/{client_id}/motor'))
+            # Temperatura normal: apagar ambos
+            all_tasks.append(update_actuator_and_log(client_id, light_actuator['id'], 'false', "Temperatura normal, luz apagada", f'clients/{client_id}/light'))
+            all_tasks.append(update_actuator_and_log(client_id, fan_actuator['id'], 'false', "Temperatura normal, ventilador apagado", f'clients/{client_id}/fan'))
+        
+        # Acciones para humedad
+        if humidity < min_humidity:
+            # Humedad baja: encender humidificador
+            all_tasks.append(update_actuator_and_log(client_id, humidifier_actuator['id'], 'true', "Humedad baja, encendiendo humidificador", f'clients/{client_id}/humidifier'))
+            all_tasks.append(update_actuator_and_log(client_id, motor_actuator['id'], 'false', "Motor apagado", f'clients/{client_id}/motor'))
+        elif humidity > max_humidity:
+            # Humedad alta: encender motor
+            all_tasks.append(update_actuator_and_log(client_id, humidifier_actuator['id'], 'false', "Humidificador apagado", f'clients/{client_id}/humidifier'))
+            all_tasks.append(update_actuator_and_log(client_id, motor_actuator['id'], 'true', "Humedad alta, encendiendo motor", f'clients/{client_id}/motor'))
+        else:
+            # Humedad normal: apagar ambos
+            all_tasks.append(update_actuator_and_log(client_id, humidifier_actuator['id'], 'false', "Humedad normal, humidificador apagado", f'clients/{client_id}/humidifier'))
+            all_tasks.append(update_actuator_and_log(client_id, motor_actuator['id'], 'false', "Humedad normal, motor apagado", f'clients/{client_id}/motor'))
         
         # Ejecutar todas las tareas en paralelo
-        await asyncio.gather(*temperature_tasks, *humidity_tasks)
+        await asyncio.gather(*all_tasks)
     except Exception as e:
         print(f"Error actualizando actuadores: {e}")
 
@@ -198,28 +205,41 @@ _actuator_last_update = {}
 ACTUATOR_CACHE_DURATION = 5  # Segundos
 
 async def update_actuator_and_log(client_id, actuator_id, state, description, topic):
-    # Verificar si el cambio es necesario usando caché
-    cache_key = f"{client_id}_{actuator_id}"
-    current_time = time.time()
-    
-    # Si el estado está en caché y es reciente, usarlo
-    if (cache_key in _actuator_state_cache and
-        current_time - _actuator_last_update.get(cache_key, 0) < ACTUATOR_CACHE_DURATION):
-        current_state = _actuator_state_cache[cache_key]
-    else:
-        # Obtener de la base de datos
-        current_state = await get_actuator_state(client_id, actuator_id)
-        # Actualizar caché
-        _actuator_state_cache[cache_key] = current_state
-        _actuator_last_update[cache_key] = current_time
-    
-    # Actualizar sólo si es necesario
-    if current_state != state:
-        await update_actuator_state(client_id, actuator_id, state)
-        await publish_message(topic, str(state).lower())
-        # Actualizar caché
-        _actuator_state_cache[cache_key] = state
-        _actuator_last_update[cache_key] = current_time
+    try:
+        # Verificar si el cambio es necesario usando caché
+        cache_key = f"{client_id}_{actuator_id}"
+        current_time = time.time()
+        
+        # Si el estado está en caché y es reciente, usarlo
+        if (cache_key in _actuator_state_cache and
+            current_time - _actuator_last_update.get(cache_key, 0) < ACTUATOR_CACHE_DURATION):
+            current_state = _actuator_state_cache[cache_key]
+        else:
+            # Obtener de la base de datos
+            current_state = await get_actuator_state(client_id, actuator_id)
+            # Actualizar caché
+            _actuator_state_cache[cache_key] = current_state
+            _actuator_last_update[cache_key] = current_time
+        
+        # Actualizar sólo si es necesario
+        if current_state != state:
+            # Primero actualizar la base de datos
+            await update_actuator_state(client_id, actuator_id, state)
+            
+            # Luego publicar el mensaje MQTT inmediatamente
+            message = str(state).lower()
+            if client and client.is_connected():
+                client.publish(topic, message, qos=1)  # QoS 1 para asegurar al menos una entrega
+                print(f"Publicando mensaje MQTT - Topico: {topic}, Mensaje: {message}")
+            
+            # Actualizar caché
+            _actuator_state_cache[cache_key] = state
+            _actuator_last_update[cache_key] = current_time
+            
+            # Guardar evento
+            await save_event(client_id, description, "actuador")
+    except Exception as e:
+        print(f"Error en update_actuator_and_log: {e}")
 
 # Cola de mensajes para publicación MQTT
 _mqtt_message_queue = []
@@ -244,16 +264,21 @@ async def _process_mqtt_queue():
     if not _mqtt_message_queue:
         return
     
-    if client:
+    if client and client.is_connected():
         queue_copy = _mqtt_message_queue.copy()
         _mqtt_message_queue = []
         _last_mqtt_publish = time.time()
         
         for topic, message in queue_copy:
-            client.publish(topic, message)
+            try:
+                client.publish(topic, message, qos=1)  # QoS 1 para asegurar al menos una entrega
+                print(f"Procesando cola MQTT - Topico: {topic}, Mensaje: {message}")
+            except Exception as e:
+                print(f"Error al publicar mensaje MQTT: {e}")
+                # Reintentar más tarde
+                _mqtt_message_queue.append((topic, message))
     else:
-        print("Cliente MQTT no esta conectado")
-        _mqtt_message_queue = []
+        print("Cliente MQTT no esta conectado, reintentando mas tarde...")
 
 # Funcion para ejecutar el bucle de eventos asincrono
 def run_event_loop():
