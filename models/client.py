@@ -1,7 +1,7 @@
 from datetime import datetime
 from .sensor_data import get_db_connection, execute_query_with_retry, execute_write_query_with_retry
 
-# Verificar si un cliente está manualmente desactivado
+# Verificar si un cliente esta manualmente desactivado
 async def is_manually_disabled(client_id):
     query = 'SELECT manually_disabled FROM clients WHERE client_id = ?'
     params = (client_id,)
@@ -16,7 +16,7 @@ async def register_client(client_id, name, description=""):
         existing = await cursor.fetchone()
     
     if existing:
-        # Verificar si el cliente está marcado como desactivado manualmente
+        # Verificar si el cliente esta marcado como desactivado manualmente
         is_disabled = await is_manually_disabled(client_id)
         
         if is_disabled:
@@ -46,16 +46,16 @@ async def register_client(client_id, name, description=""):
         params = (client_id, name, description, datetime.now().isoformat(), datetime.now().isoformat())
         await conn.execute(query, params)
         
-        # Crear configuración inicial para el nuevo cliente
+        # Crear configuracion inicial para el nuevo cliente
         await initialize_client_config(conn, client_id)
     
     await conn.commit()
     await conn.close()
     return True
 
-# Inicializar configuración para un nuevo cliente
+# Inicializar configuracion para un nuevo cliente
 async def initialize_client_config(conn, client_id):
-    # Crear parámetros ideales para el cliente
+    # Crear parametros ideales para el cliente
     await conn.execute('''
         INSERT INTO ideal_params (client_id, param_type, min_value, max_value, timestamp)
         VALUES (?, 'temperatura', 15, 30, ?)
@@ -80,7 +80,7 @@ async def initialize_client_config(conn, client_id):
             VALUES (?, ?, ?, ?)
         ''', (client_id, nombre, estado, datetime.now().isoformat()))
     
-    # Crear estado inicial de la aplicación
+    # Crear estado inicial de la aplicacion
     await conn.execute('''
         INSERT INTO app_state (client_id, mode, timestamp)
         VALUES (?, 'automatico', ?)
@@ -88,7 +88,7 @@ async def initialize_client_config(conn, client_id):
 
 # Actualizar el estado de un cliente
 async def update_client_status(client_id, status='online'):
-    # Si se está desactivando manualmente, marcar la bandera
+    # Si se esta desactivando manualmente, marcar la bandera
     if status == 'offline':
         query = '''
             UPDATE clients
@@ -96,10 +96,10 @@ async def update_client_status(client_id, status='online'):
             WHERE client_id = ?
         '''
     else:
-        # Verificar si el cliente está manualmente desactivado
+        # Verificar si el cliente esta manualmente desactivado
         is_disabled = await is_manually_disabled(client_id)
         if is_disabled:
-            # Si está manualmente desactivado, solo actualizar last_seen pero mantener offline
+            # Si esta manualmente desactivado, solo actualizar last_seen pero mantener offline
             query = '''
                 UPDATE clients
                 SET last_seen = ?
@@ -137,7 +137,7 @@ async def get_all_clients():
     result = await execute_query_with_retry(query)
     return result
 
-# Obtener un cliente específico por ID
+# Obtener un cliente especifico por ID
 async def get_client_by_id(client_id):
     query = 'SELECT * FROM clients WHERE client_id = ?'
     params = (client_id,)
@@ -150,3 +150,50 @@ async def client_exists(client_id):
     params = (client_id,)
     result = await execute_query_with_retry(query, params)
     return result[0]['count'] > 0 if result else False
+
+# Actualizar nombre y descripcion de un cliente
+async def update_client_info(client_id, name, description=""):
+    query = '''
+        UPDATE clients
+        SET name = ?, description = ?
+        WHERE client_id = ?
+    '''
+    params = (name, description, client_id)
+    await execute_write_query_with_retry(query, params)
+    return True
+
+# Eliminar un cliente y todos sus datos relacionados
+async def delete_client(client_id):
+    conn = await get_db_connection()
+    try:
+        # Iniciar transaccion
+        await conn.execute('BEGIN TRANSACTION')
+        
+        # Eliminar datos de sensores SHT3x
+        await conn.execute('DELETE FROM sht3x_data WHERE client_id = ?', (client_id,))
+        
+        # Eliminar eventos
+        await conn.execute('DELETE FROM events WHERE client_id = ?', (client_id,))
+        
+        # Eliminar actuadores
+        await conn.execute('DELETE FROM actuators WHERE client_id = ?', (client_id,))
+        
+        # Eliminar parametros ideales
+        await conn.execute('DELETE FROM ideal_params WHERE client_id = ?', (client_id,))
+        
+        # Eliminar estados de la aplicacion
+        await conn.execute('DELETE FROM app_state WHERE client_id = ?', (client_id,))
+        
+        # Finalmente, eliminar el cliente
+        await conn.execute('DELETE FROM clients WHERE client_id = ?', (client_id,))
+        
+        # Confirmar transaccion
+        await conn.execute('COMMIT')
+        return True
+    except Exception as e:
+        # Revertir cambios en caso de error
+        await conn.execute('ROLLBACK')
+        print(f"Error al eliminar cliente: {e}")
+        raise e
+    finally:
+        await conn.close()
