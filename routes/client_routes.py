@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from models.client import get_all_clients, get_client_by_id, register_client, update_client_status, enable_client
+from models.client import get_all_clients, get_client_by_id, register_client, update_client_status, enable_client, update_client_info, delete_client
 
 client_bp = Blueprint('client_bp', __name__)
 
@@ -12,7 +12,7 @@ async def list_clients():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# API para obtener un cliente específico
+# API para obtener un cliente especifico
 @client_bp.route('/clients/<client_id>', methods=['GET'])
 async def get_client(client_id):
     try:
@@ -52,12 +52,48 @@ async def update_status(client_id):
             return jsonify({"error": "Estado no valido"}), 400
         
         if status == 'online':
-            # Si estamos activando, usar la función específica para ello
+            # Si estamos activando, usar la funcion especifica para ello
             await enable_client(client_id)
         else:
-            # Si estamos desactivando, usar función existente
+            # Si estamos desactivando, usar funcion existente
             await update_client_status(client_id, status)
             
         return jsonify({"message": "Estado actualizado correctamente"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# API para actualizar informacion del cliente (nombre y descripcion)
+@client_bp.route('/clients/<client_id>/info', methods=['PUT'])
+async def update_info(client_id):
+    try:
+        data = request.json
+        name = data.get('name')
+        description = data.get('description', '')
+        
+        if not name:
+            return jsonify({"error": "Se requiere name"}), 400
+            
+        # Verificar si el cliente existe
+        client = await get_client_by_id(client_id)
+        if not client:
+            return jsonify({"error": "Cliente no encontrado"}), 404
+            
+        await update_client_info(client_id, name, description)
+        return jsonify({"message": "Informacion del cliente actualizada correctamente"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# API para eliminar un cliente y todos sus datos relacionados
+@client_bp.route('/clients/<client_id>', methods=['DELETE'])
+async def remove_client(client_id):
+    try:
+        # Verificar si el cliente existe
+        client = await get_client_by_id(client_id)
+        if not client:
+            return jsonify({"error": "Cliente no encontrado"}), 404
+            
+        # Eliminar cliente y todos los datos relacionados
+        await delete_client(client_id)
+        return jsonify({"message": "Cliente y todos sus datos eliminados correctamente"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
