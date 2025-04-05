@@ -8,14 +8,12 @@ MSAD es un sistema ligero y autónomo para gestionar respaldos de la base de dat
 
 El módulo MSAD se compone de los siguientes archivos:
 
-- `run_msad.py`: Aplicación principal que contiene toda la lógica para:
-  - Crear respaldos de la base de datos
-  - Iniciar y gestionar el servidor HTTP
-  - Ofrecer una interfaz de menú interactiva
-  
+- `config.py`: Configuración centralizada utilizada por todos los componentes
+- `server.py`: Implementación del servidor y funcionalidades de respaldo
+- `integration.py`: Facilita la integración con RaspServer
+- `run_msad.py`: Script para ejecutar MSAD de forma independiente
 - `__init__.py`: Archivo que mantiene la carpeta como un módulo Python válido
-  
-- `index.html`: Página web que muestra el servidor HTTP, proporcionando una interfaz amigable para acceder a los respaldos
+- `index.html`: Página web para el servidor HTTP
 
 ## Requisitos del Sistema
 
@@ -24,20 +22,11 @@ El módulo MSAD se compone de los siguientes archivos:
 - **Navegador web**: Para acceder a la interfaz HTTP desde otros dispositivos
 - **Acceso a red local**: Para permitir que otros dispositivos accedan al servidor
 
-## Instalación y Configuración
-
-MSAD no requiere instalación especial. Simplemente asegúrese de:
-
-1. Tener los archivos `run_msad.py`, `__init__.py` e `index.html` en la carpeta `msad` de su proyecto
-2. Verificar que la base de datos de RaspServer existe y es accesible:
-   - En Raspberry Pi: `/home/stevpi/Desktop/raspServer/sensor_data.db`
-   - En Windows: `[ruta-del-proyecto]/sensor_data.db`
-
 ## Uso Detallado
 
-### Iniciar MSAD
+### Modo Independiente
 
-Para ejecutar el microservicio:
+Para ejecutar MSAD como aplicación independiente:
 
 ```bash
 # En Windows (desde la carpeta principal del proyecto)
@@ -47,9 +36,36 @@ python msad/run_msad.py
 python3 msad/run_msad.py
 ```
 
-### Menú Principal
+### Integración con RaspServer
 
-Al iniciar, MSAD muestra un menú interactivo con las siguientes opciones:
+MSAD puede integrarse directamente con RaspServer. Simplemente añade estas líneas a tu archivo `app.py`:
+
+```python
+# Al inicio del archivo, añadir:
+from msad.integration import init_msad, shutdown_msad, create_backup, get_msad_status
+
+# Después de inicializar la app Flask:
+msad_status = init_msad(auto_backup=True, backup_interval_hours=24)
+print(f"Estado de MSAD: {msad_status['message']}")
+
+# Registrar función de limpieza al salir (opcional, ya lo hace init_msad):
+# atexit.register(shutdown_msad)
+```
+
+Esto iniciará automáticamente MSAD cuando arranque RaspServer.
+
+### API para RaspServer
+
+La integración proporciona estas funciones:
+
+- `init_msad()`: Inicializa el servidor MSAD
+- `shutdown_msad()`: Detiene el servidor y libera recursos
+- `create_backup()`: Crea un respaldo manual
+- `get_msad_status()`: Obtiene información del estado actual
+
+### Menú Principal (en modo independiente)
+
+Al iniciar MSAD, muestra un menú interactivo con las siguientes opciones:
 
 1. **Crear respaldo manual**: 
    - Crea una copia de seguridad de la base de datos actual
@@ -81,106 +97,75 @@ Para acceder al servidor:
    - La IP se muestra al iniciar MSAD o en la opción "Ver información del servidor"
    - El puerto predeterminado es 8080
 
-### Estructura de Respaldos
+## Configuración
+
+Todos los ajustes están centralizados en `config.py`:
+
+```python
+# Ejemplo de configuración
+DATABASE_PATH = "/home/stevpi/Desktop/raspServer/sensor_data.db"
+STORAGE_DIR = "/mnt/storage/msad"
+HTTP_PORT = 8080
+BACKUP_RETENTION = {
+    "daily": 7,    # Número de respaldos diarios a mantener
+    "weekly": 4,   # Número de respaldos semanales a mantener
+    "monthly": 6   # Número de respaldos mensuales a mantener
+}
+```
+
+### Limpieza Automática
+
+MSAD incluye limpieza automática de respaldos antiguos según la política definida en `config.py`.
+
+## Estructura de Respaldos
 
 Los respaldos y datos se organizan de la siguiente manera:
 
-**En Raspberry Pi**:
 ```
-/mnt/storage/msad/
+/mnt/storage/msad/ (o C:\ruta\proyecto\storage\msad en Windows)
 ├── backups/
-│   ├── daily/      # Respaldos diarios creados manualmente
+│   ├── daily/      # Respaldos diarios 
 │   ├── weekly/     # Respaldos semanales (domingos)
 │   └── monthly/    # Respaldos mensuales (día 1)
 └── index.html      # Página de inicio del servidor HTTP
 ```
 
-**En Windows**:
-```
-[ruta-del-proyecto]/storage/msad/
-├── backups/
-│   ├── daily/      # Respaldos diarios creados manualmente
-│   ├── weekly/     # Respaldos semanales (domingos)
-│   └── monthly/    # Respaldos mensuales (día 1)
-└── index.html      # Página de inicio del servidor HTTP
-```
+## Comunicación entre RaspServer y MSAD
 
-## Funcionamiento Técnico
+MSAD utiliza un sistema de colas (`Queue`) para la comunicación entre componentes:
 
-### Detección Automática del Sistema
-
-MSAD detecta automáticamente si se ejecuta en Windows o Raspberry Pi mediante:
-
-```python
-IS_WINDOWS = platform.system() == "Windows"
-```
-
-Esto permite configurar las rutas correctas para archivos y respaldos según el sistema operativo.
-
-### Creación de Respaldos
-
-El proceso de respaldo utiliza SQLite para crear una copia completa de la base de datos:
-
-```python
-conn = sqlite3.connect(DB_PATH)
-with conn:
-    conn.execute(f"VACUUM INTO '{backup_path}'")
-conn.close()
-```
-
-Este método preserva la integridad de los datos al crear una copia exacta y optimizada de la base de datos.
-
-### Servidor HTTP
-
-El servidor utiliza el módulo `http.server` de Python para crear un servidor simple:
-
-```python
-handler = http.server.SimpleHTTPRequestHandler
-self.httpd = socketserver.TCPServer(("", PORT), handler)
-```
-
-Esto proporciona un acceso básico a archivos con capacidades de navegación por directorios.
+- Al crear un respaldo, MSAD envía un mensaje a la cola
+- Al iniciar/detener el servidor, se envían mensajes de estado
+- El sistema de integración captura estos mensajes y actúa en consecuencia
 
 ## Solución de Problemas
 
 ### Base de datos no encontrada
 
 Si MSAD no encuentra la base de datos:
-1. Verifique que la ruta a la base de datos sea correcta
-2. Asegúrese de haber ejecutado primero la aplicación principal (app.py) para crear la base de datos
-3. Compruebe los permisos de lectura/escritura en la ubicación de la base de datos
+1. Verifique la ruta en `config.py`
+2. Asegúrese de haber ejecutado primero la aplicación principal
+3. Compruebe los permisos de lectura/escritura
 
 ### No se puede acceder al servidor HTTP
 
 Si no puede acceder al servidor desde otros dispositivos:
 1. Verifique que ambos dispositivos estén en la misma red
 2. Compruebe si hay algún firewall bloqueando el puerto 8080
-3. Intente acceder usando la dirección IP local exacta mostrada en "Ver información del servidor"
+3. Intente acceder usando la dirección IP local exacta mostrada en el panel
 4. Asegúrese de que MSAD sigue ejecutándose
 
 ### Problemas de permisos
 
 En Raspberry Pi, si hay problemas para crear directorios o respaldos:
-1. Verifique que el usuario tiene permisos de escritura en `/mnt/storage/`
-2. Si el directorio no existe, puede necesitar crearlo manualmente con:
-   ```bash
-   sudo mkdir -p /mnt/storage/msad
-   sudo chmod 755 /mnt/storage/msad
-   sudo chown -R [su-usuario] /mnt/storage/msad
-   ```
+1. Verifique que el usuario tiene permisos de escritura
+2. Si el directorio no existe, puede necesitar crearlo manualmente
 
 ## Personalización Avanzada
 
-Para personalizar MSAD, puede modificar directamente `run_msad.py` para:
+Para personalizar MSAD, modifique el archivo `config.py` para:
 
-- Cambiar el puerto del servidor HTTP (variable `PORT = 8080`)
-- Modificar las rutas de almacenamiento (`STORAGE_DIR`)
-- Añadir nuevas funcionalidades al menú principal
-- Personalizar la frecuencia de los respaldos automáticos
-
-## Limitaciones Actuales
-
-- No implementa autenticación para el servidor HTTP
-- No incluye compresión de respaldos
-- No proporciona restauración automática desde respaldos
-- No realiza respaldos programados (solo manuales) 
+- Cambiar el puerto del servidor HTTP
+- Modificar las rutas de almacenamiento
+- Ajustar la política de retención de respaldos
+- Cambiar el intervalo de respaldos automáticos 

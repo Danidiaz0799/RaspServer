@@ -7,12 +7,15 @@ from routes.event_routes import event_bp
 from routes.actuator_routes import actuator_bp
 from routes.app_state_routes import app_state_bp
 from routes.statistics_routes import statistics_bp
+# from routes.msad_routes import msad_bp  # Comentamos esta línea que causa el error
 from mqtt_client import connect_mqtt, cleanup as mqtt_cleanup
 import os
 import threading
 from models.sensor_data import cleanup
 import atexit
 from database import create_tables
+# Integración con MSAD
+from msad import init_msad, shutdown_msad, create_msad_blueprint
 
 # Configuracion de la carpeta donde esta la app Angular
 ANGULAR_BUILD_FOLDER = "/home/stevpi/Desktop/raspServer/angular_app/dist/mushroom-automation"
@@ -42,6 +45,15 @@ app.register_blueprint(event_bp, url_prefix='/api')
 app.register_blueprint(actuator_bp, url_prefix='/api')
 app.register_blueprint(app_state_bp, url_prefix='/api')
 app.register_blueprint(statistics_bp, url_prefix='/api')
+# app.register_blueprint(msad_bp, url_prefix='/api')  # Comentamos esta línea
+
+# Creamos y registramos el blueprint directamente
+msad_bp = create_msad_blueprint()
+app.register_blueprint(msad_bp, url_prefix='/api')
+
+# Inicializar MSAD (Microservicio de Almacenamiento Distribuido)
+msad_status = init_msad(auto_backup=True, backup_interval_hours=24)
+print(f"Estado de MSAD: {msad_status['message']}")
 
 # Cache para archivos estaticos
 cache_timeout = 3600  # 1 hora para archivos estaticos
@@ -76,6 +88,8 @@ def start_mqtt_client():
 def on_exit():
     print("Limpiando recursos antes de salir...")
     mqtt_cleanup()
+    # Limpiar MSAD antes de salir
+    shutdown_msad()
     import asyncio
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
