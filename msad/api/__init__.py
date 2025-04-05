@@ -1,6 +1,5 @@
 """
-Paquete API para MSAD
+Paquete API minimalista para MSAD
 """
-
-# Importar todo desde el archivo de exportaciones
-from msad.api.api_exports import * 
+# No importamos nada automáticamente, las importaciones
+# específicas se hacen directamente en los archivos que las necesitan 

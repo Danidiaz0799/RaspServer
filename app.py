@@ -7,7 +7,8 @@ from routes.event_routes import event_bp
 from routes.actuator_routes import actuator_bp
 from routes.app_state_routes import app_state_bp
 from routes.statistics_routes import statistics_bp
-# from routes.msad_routes import msad_bp  # Comentamos esta línea que causa el error
+# La siguiente línea causa error porque ya no existe routes.msad_routes
+# from routes.msad_routes import msad_bp
 from mqtt_client import connect_mqtt, cleanup as mqtt_cleanup
 import os
 import threading
@@ -15,7 +16,7 @@ from models.sensor_data import cleanup
 import atexit
 from database import create_tables
 # Integración con MSAD
-from msad import init_msad, shutdown_msad, create_msad_blueprint
+from msad import init_msad, shutdown_msad, create_msad_blueprint, create_export_blueprint
 
 # Configuracion de la carpeta donde esta la app Angular
 ANGULAR_BUILD_FOLDER = "/home/stevpi/Desktop/raspServer/angular_app/dist/mushroom-automation"
@@ -45,11 +46,15 @@ app.register_blueprint(event_bp, url_prefix='/api')
 app.register_blueprint(actuator_bp, url_prefix='/api')
 app.register_blueprint(app_state_bp, url_prefix='/api')
 app.register_blueprint(statistics_bp, url_prefix='/api')
-# app.register_blueprint(msad_bp, url_prefix='/api')  # Comentamos esta línea
+# app.register_blueprint(msad_bp, url_prefix='/api')  # Comentamos esta línea porque ya no existe msad_bp
 
 # Creamos y registramos el blueprint directamente
 msad_bp = create_msad_blueprint()
 app.register_blueprint(msad_bp, url_prefix='/api')
+
+# Registramos el blueprint de exportación
+export_bp = create_export_blueprint()
+app.register_blueprint(export_bp, url_prefix='/api')
 
 # Inicializar MSAD (Microservicio de Almacenamiento Distribuido)
 msad_status = init_msad(auto_backup=True, backup_interval_hours=24)

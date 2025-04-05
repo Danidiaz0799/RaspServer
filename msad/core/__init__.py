@@ -1,6 +1,5 @@
 """
-Paquete core para MSAD
+Paquete core minimalista para MSAD
 """
-
-# Importar todo desde el archivo de exportaciones
-from msad.core.core_exports import *
+# No importamos nada automáticamente, las importaciones
+# específicas se hacen directamente en los archivos que las necesitan

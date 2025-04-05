@@ -74,6 +74,13 @@ def ensure_directories():
     os.makedirs(os.path.join(get_storage_dir(), "backups", "daily"), exist_ok=True)
     os.makedirs(os.path.join(get_storage_dir(), "backups", "weekly"), exist_ok=True)
     os.makedirs(os.path.join(get_storage_dir(), "backups", "monthly"), exist_ok=True)
-    os.makedirs(os.path.join(get_storage_dir(), "exports", "csv"), exist_ok=True)
-    os.makedirs(os.path.join(get_storage_dir(), "exports", "json"), exist_ok=True)
-    os.makedirs(os.path.join(get_storage_dir(), "data", "clients"), exist_ok=True) 
+    
+    # Estructura para datos de clientes
+    os.makedirs(os.path.join(get_storage_dir(), "data", "clients"), exist_ok=True)
+    
+    # Directorio base para exportaciones (nueva estructura)
+    exports_dir = os.path.join(get_storage_dir(), "exports")
+    os.makedirs(exports_dir, exist_ok=True)
+    
+    # Nota: Ya no creamos subdirectorios fijos para exportaciones
+    # Los directorios específicos por cliente se crearán dinámicamente 
