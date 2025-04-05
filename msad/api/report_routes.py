@@ -4,6 +4,7 @@ Report routes module for MSAD - Data reporting and export endpoints
 from flask import Blueprint, jsonify, request, send_file
 from msad.core.system import logger
 from msad.core.reports import generate_report, list_reports, get_report_file
+import os
 
 def create_report_blueprint():
     """
@@ -123,6 +124,53 @@ def create_report_blueprint():
                 
         except Exception as e:
             logger.error(f"Error downloading report: {str(e)}")
+            return jsonify({
+                "success": False,
+                "error": str(e)
+            }), 500
+            
+    @report_bp.route('/clients/<client_id>/msad/reports/<report_id>', methods=['DELETE'])
+    def delete_report(client_id, report_id):
+        """Endpoint to delete a report using report_id"""
+        try:
+            logger.info(f"Intentando eliminar reporte con ID {report_id} del cliente {client_id}")
+            
+            # Obtener la ruta del archivo usando el report_id
+            file_path = get_report_file(client_id, report_id)
+            
+            if not file_path:
+                logger.warning(f"Reporte no encontrado: {report_id}")
+                return jsonify({
+                    "success": False,
+                    "error": "Reporte no encontrado",
+                    "report_id": report_id,
+                    "client_id": client_id
+                }), 404
+            
+            # Obtener el nombre real del archivo desde la ruta
+            filename = os.path.basename(file_path)
+            
+            # Eliminar el archivo
+            try:
+                os.remove(file_path)
+                logger.info(f"Reporte eliminado: {filename}")
+                return jsonify({
+                    "success": True,
+                    "message": "Reporte eliminado correctamente",
+                    "report_id": report_id,
+                    "filename": filename,
+                    "client_id": client_id
+                })
+            except Exception as e:
+                logger.error(f"Error al eliminar archivo {file_path}: {str(e)}")
+                return jsonify({
+                    "success": False,
+                    "error": f"No se pudo eliminar el archivo: {str(e)}",
+                    "report_id": report_id
+                }), 500
+                
+        except Exception as e:
+            logger.error(f"Error al eliminar reporte: {str(e)}")
             return jsonify({
                 "success": False,
                 "error": str(e)

@@ -237,24 +237,51 @@ def list_reports(client_id=None, format=None, data_type=None):
         logger.error(f"Error al listar reportes: {str(e)}")
         return {"success": False, "error": str(e)}
 
-def get_report_file(client_id, filename):
+def get_report_file(client_id, filename_or_id):
     """
     Obtener la ruta de un archivo de reporte
     
     Args:
         client_id: ID del cliente
-        filename: Nombre del archivo
+        filename_or_id: Nombre del archivo o report_id
     
     Returns:
         str: Ruta al archivo o None si no existe
     """
     try:
-        file_path = os.path.join(STORAGE_PATH, "reports", client_id, filename)
-        
-        if os.path.exists(file_path) and os.path.isfile(file_path):
-            return file_path
-        
-        return None
+        # Comprobar si es un filename completo o un report_id
+        if filename_or_id.startswith('report_'):
+            # Es un report_id, buscar por timestamp
+            report_timestamp = filename_or_id.replace('report_', '')
+            
+            client_dir = os.path.join(STORAGE_PATH, "reports", client_id)
+            if not os.path.exists(client_dir):
+                logger.warning(f"Directorio del cliente no encontrado: {client_dir}")
+                return None
+                
+            # Buscar todos los archivos que contienen ese timestamp
+            for filename in os.listdir(client_dir):
+                if os.path.isfile(os.path.join(client_dir, filename)):
+                    # Verificar si el timestamp está en el nombre del archivo
+                    parts = filename.split('_')
+                    if len(parts) >= 5:
+                        # El timestamp suele ser la última parte antes de la extensión
+                        file_timestamp = parts[-1].split('.')[0]
+                        if file_timestamp == report_timestamp:
+                            logger.info(f"Archivo encontrado por report_id {filename_or_id}: {filename}")
+                            return os.path.join(client_dir, filename)
+            
+            logger.warning(f"No se encontró archivo con report_id {filename_or_id}")
+            return None
+        else:
+            # Es un nombre de archivo completo
+            file_path = os.path.join(STORAGE_PATH, "reports", client_id, filename_or_id)
+            
+            if os.path.exists(file_path) and os.path.isfile(file_path):
+                return file_path
+            
+            logger.warning(f"Archivo no encontrado: {file_path}")
+            return None
     except Exception as e:
         logger.error(f"Error al obtener archivo de reporte: {str(e)}")
         return None 
