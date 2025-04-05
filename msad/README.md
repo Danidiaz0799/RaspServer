@@ -1,171 +1,97 @@
 # MSAD - Microservicio de Almacenamiento Distribuido
 
-## Descripción General
+## Descripción
 
-MSAD es un sistema ligero y autónomo para gestionar respaldos de la base de datos de RaspServer y compartirlos a través de un servidor HTTP integrado. Diseñado para funcionar tanto en Raspberry Pi como en Windows, este microservicio proporciona una solución simple pero efectiva para el almacenamiento y acceso a copias de seguridad.
+MSAD es un microservicio que gestiona respaldos automáticos de la base de datos, exportaciones y almacenamiento distribuido para el proyecto RaspServer. Proporciona una interfaz HTTP para acceder a los respaldos y datos almacenados.
 
-## Estructura de Archivos
+## Estructura del Módulo
 
-El módulo MSAD se compone de los siguientes archivos:
+El módulo MSAD ha sido organizado de forma modular y con nombres descriptivos para maximizar la escalabilidad, mantenibilidad y claridad visual:
 
-- `config.py`: Configuración centralizada utilizada por todos los componentes
-- `server.py`: Implementación del servidor y funcionalidades de respaldo
-- `integration.py`: Facilita la integración con RaspServer
-- `run_msad.py`: Script para ejecutar MSAD de forma independiente
-- `__init__.py`: Archivo que mantiene la carpeta como un módulo Python válido
-- `index.html`: Página web para el servidor HTTP
-
-## Requisitos del Sistema
-
-- **Python 3.6 o superior**: Necesario para ejecutar el script principal
-- **SQLite3**: Utilizado para manejar los respaldos de la base de datos
-- **Navegador web**: Para acceder a la interfaz HTTP desde otros dispositivos
-- **Acceso a red local**: Para permitir que otros dispositivos accedan al servidor
-
-## Uso Detallado
-
-### Modo Independiente
-
-Para ejecutar MSAD como aplicación independiente:
-
-```bash
-# En Windows (desde la carpeta principal del proyecto)
-python msad/run_msad.py
-
-# En Raspberry Pi
-python3 msad/run_msad.py
+```
+msad/
+├── __init__.py                # Importación minimalista
+├── msad_main.py               # Punto de entrada principal
+├── run_msad.py                # Script ejecutable
+├── config/
+│   ├── __init__.py            # Inicialización mínima
+│   ├── app_settings.py        # Variables y parámetros de configuración
+│   └── config_exports.py      # Exportaciones centralizadas de configuración
+├── core/
+│   ├── __init__.py            # Inicialización mínima
+│   ├── backup_manager.py      # Operaciones de respaldo
+│   ├── system_utils.py        # Sistema y funciones auxiliares
+│   └── core_exports.py        # Exportaciones centralizadas del core
+├── api/
+│   ├── __init__.py            # Inicialización mínima
+│   ├── flask_routes.py        # Definición de endpoints Flask
+│   └── api_exports.py         # Exportaciones centralizadas de la API
+├── server/
+│   ├── __init__.py            # Inicialización mínima
+│   ├── web_server.py          # Implementación del servidor HTTP
+│   └── server_exports.py      # Exportaciones centralizadas del servidor
+└── index.html                 # Página web para el servidor HTTP
 ```
 
-### Integración con RaspServer
+## Uso
 
-MSAD puede integrarse directamente con RaspServer. Simplemente añade estas líneas a tu archivo `app.py`:
+### Uso dentro de RaspServer
 
 ```python
-# Al inicio del archivo, añadir:
-from msad.integration import init_msad, shutdown_msad, create_backup, get_msad_status
+from msad import init_msad, shutdown_msad, create_backup, get_msad_status
 
-# Después de inicializar la app Flask:
-msad_status = init_msad(auto_backup=True, backup_interval_hours=24)
-print(f"Estado de MSAD: {msad_status['message']}")
+# Inicializar MSAD
+status = init_msad(auto_backup=True, backup_interval_hours=24)
+print(f"Estado MSAD: {status}")
 
-# Registrar función de limpieza al salir (opcional, ya lo hace init_msad):
-# atexit.register(shutdown_msad)
+# Crear un respaldo manual
+backup_result = create_backup()
+
+# Obtener estado actual
+status = get_msad_status()
+
+# Al cerrar la aplicación
+shutdown_msad()
 ```
 
-Esto iniciará automáticamente MSAD cuando arranque RaspServer.
+### Uso como servicio independiente
 
-### API para RaspServer
+```bash
+python -m msad.run_msad
+```
 
-La integración proporciona estas funciones:
+### Integración con Flask
 
-- `init_msad()`: Inicializa el servidor MSAD
-- `shutdown_msad()`: Detiene el servidor y libera recursos
-- `create_backup()`: Crea un respaldo manual
-- `get_msad_status()`: Obtiene información del estado actual
+```python
+from msad import create_msad_blueprint
 
-### Menú Principal (en modo independiente)
+# Crear y registrar el blueprint
+msad_bp = create_msad_blueprint()
+app.register_blueprint(msad_bp, url_prefix='/api')
+```
 
-Al iniciar MSAD, muestra un menú interactivo con las siguientes opciones:
+## Rutas API
 
-1. **Crear respaldo manual**: 
-   - Crea una copia de seguridad de la base de datos actual
-   - El respaldo se almacena en la carpeta de respaldos diarios
-   - Si se crea en domingo, también se guarda una copia en respaldos semanales
-   - Si se crea el día 1 del mes, también se guarda una copia en respaldos mensuales
-
-2. **Ver información del servidor**:
-   - Muestra el estado actual del servidor HTTP (activo/inactivo)
-   - Indica la URL completa para acceder al servidor
-   - Presenta la ubicación de los directorios de almacenamiento
-   - Muestra un recuento de los respaldos existentes (diarios, semanales, mensuales)
-
-3. **Salir**:
-   - Detiene el servidor HTTP
-   - Cierra la aplicación
-
-### Servidor HTTP Integrado
-
-El servidor HTTP se inicia automáticamente al ejecutar MSAD y proporciona:
-
-- Acceso a los respaldos desde cualquier dispositivo en la red local
-- Una interfaz web amigable para navegar por los archivos
-- URLs para descargar directamente los archivos de respaldo
-
-Para acceder al servidor:
-1. Abra un navegador en cualquier dispositivo conectado a la misma red
-2. Ingrese la dirección: `http://IP-DEL-SERVIDOR:8080`
-   - La IP se muestra al iniciar MSAD o en la opción "Ver información del servidor"
-   - El puerto predeterminado es 8080
+- `GET /api/msad/status`: Obtener estado del servicio
+- `POST /api/msad/backup`: Crear respaldo manual
+- `POST /api/msad/restart`: Reiniciar el servicio
+- `GET /api/clients/<client_id>/msad/stats`: Estadísticas para cliente específico
 
 ## Configuración
 
-Todos los ajustes están centralizados en `config.py`:
+Las rutas y comportamiento de MSAD se pueden configurar en el archivo `config/app_settings.py`.
 
-```python
-# Ejemplo de configuración
-DATABASE_PATH = "/home/stevpi/Desktop/raspServer/sensor_data.db"
-STORAGE_DIR = "/mnt/storage/msad"
-HTTP_PORT = 8080
-BACKUP_RETENTION = {
-    "daily": 7,    # Número de respaldos diarios a mantener
-    "weekly": 4,   # Número de respaldos semanales a mantener
-    "monthly": 6   # Número de respaldos mensuales a mantener
-}
-```
+## Desarrollo
 
-### Limpieza Automática
+Para extender la funcionalidad de MSAD, se recomienda seguir la estructura modular existente:
 
-MSAD incluye limpieza automática de respaldos antiguos según la política definida en `config.py`.
+1. Añadir funcionalidad en los archivos principales:
+   - Nuevas configuraciones en `config/app_settings.py`
+   - Funcionalidad de respaldo en `core/backup_manager.py`
+   - Utilidades del sistema en `core/system_utils.py`
+   - Endpoints API en `api/flask_routes.py`
+   - Funcionalidad del servidor en `server/web_server.py`
 
-## Estructura de Respaldos
-
-Los respaldos y datos se organizan de la siguiente manera:
-
-```
-/mnt/storage/msad/ (o C:\ruta\proyecto\storage\msad en Windows)
-├── backups/
-│   ├── daily/      # Respaldos diarios 
-│   ├── weekly/     # Respaldos semanales (domingos)
-│   └── monthly/    # Respaldos mensuales (día 1)
-└── index.html      # Página de inicio del servidor HTTP
-```
-
-## Comunicación entre RaspServer y MSAD
-
-MSAD utiliza un sistema de colas (`Queue`) para la comunicación entre componentes:
-
-- Al crear un respaldo, MSAD envía un mensaje a la cola
-- Al iniciar/detener el servidor, se envían mensajes de estado
-- El sistema de integración captura estos mensajes y actúa en consecuencia
-
-## Solución de Problemas
-
-### Base de datos no encontrada
-
-Si MSAD no encuentra la base de datos:
-1. Verifique la ruta en `config.py`
-2. Asegúrese de haber ejecutado primero la aplicación principal
-3. Compruebe los permisos de lectura/escritura
-
-### No se puede acceder al servidor HTTP
-
-Si no puede acceder al servidor desde otros dispositivos:
-1. Verifique que ambos dispositivos estén en la misma red
-2. Compruebe si hay algún firewall bloqueando el puerto 8080
-3. Intente acceder usando la dirección IP local exacta mostrada en el panel
-4. Asegúrese de que MSAD sigue ejecutándose
-
-### Problemas de permisos
-
-En Raspberry Pi, si hay problemas para crear directorios o respaldos:
-1. Verifique que el usuario tiene permisos de escritura
-2. Si el directorio no existe, puede necesitar crearlo manualmente
-
-## Personalización Avanzada
-
-Para personalizar MSAD, modifique el archivo `config.py` para:
-
-- Cambiar el puerto del servidor HTTP
-- Modificar las rutas de almacenamiento
-- Ajustar la política de retención de respaldos
-- Cambiar el intervalo de respaldos automáticos 
+2. Exportar las nuevas funciones:
+   - Añadir exportaciones en el archivo `*_exports.py` correspondiente
+   - Los archivos `__init__.py` no necesitan modificación 
