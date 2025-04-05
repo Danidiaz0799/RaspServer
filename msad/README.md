@@ -1,53 +1,203 @@
-# MSAD - Microservicio de Almacenamiento y Datos
+# 📊 MSAD - Microservicio de Almacenamiento y Datos
 
-## Descripción
+<div align="center">
 
-MSAD es un microservicio simplificado y optimizado que proporciona generación y gestión de reportes para el proyecto RaspServer. Este sistema permite extraer, filtrar y exportar datos de sensores, eventos y actuadores para facilitar el análisis y monitoreo de cultivos de hongos.
+![Versión](https://img.shields.io/badge/Versión-1.0.0--minimal-blue)
+![Integración](https://img.shields.io/badge/Integración-RaspServer-green)
+![Estado](https://img.shields.io/badge/Estado-Activo-brightgreen)
 
-## Ventajas
+</div>
 
-- **Interfaz Simple**: API RESTful intuitiva y fácil de usar
-- **Mínima Sobrecarga**: Arquitectura simplificada para máximo rendimiento
-- **Formatos Flexibles**: Soporte para exportación en JSON y CSV
-- **Filtrado por Cliente**: Reportes específicos por cada cultivo/cliente
-- **Consultas Optimizadas**: Bajo impacto en la base de datos principal
-- **Mantenimiento Reducido**: Menos dependencias, menos puntos de fallo
+## 📋 Índice
 
-## ¿Por qué MSAD en RaspServer?
+- [Descripción](#-descripción)
+- [Arquitectura](#-arquitectura)
+- [Funcionalidades](#-funcionalidades)
+- [Integración con RaspServer](#-integración-con-raspserver)
+- [API Reference](#-api-reference)
+- [Ejemplos Prácticos](#-ejemplos-prácticos)
+- [Esquema de Almacenamiento](#-esquema-de-almacenamiento)
+- [Flujo de Trabajo](#-flujo-de-trabajo)
+- [Solución de Problemas](#-solución-de-problemas)
+- [Desarrollo Futuro](#-desarrollo-futuro)
 
-RaspServer necesitaba una forma eficiente de:
-1. **Extraer y Analizar Datos**: Obtener información histórica de sensores de forma estructurada
-2. **Comparar Periodos**: Facilitar la comparación entre diferentes periodos de cultivo
-3. **Exportar Información**: Permitir el uso de datos en herramientas externas
-4. **Generar Informes**: Crear documentación para análisis técnico y de negocio
+## 📝 Descripción
 
-MSAD resuelve estos problemas proporcionando un sistema integrado pero independiente que procesa los datos sin interferir con las operaciones principales del sistema.
+MSAD es un **microservicio optimizado** para generación y gestión de reportes que se integra perfectamente con RaspServer. Permite extraer, filtrar y exportar datos críticos del cultivo de hongos para facilitar análisis detallados y toma de decisiones.
 
-## Estructura Simplificada
+### ✨ Características Clave
 
-La nueva versión de MSAD ha sido optimizada con una estructura minimalista:
+| Característica | Descripción |
+|----------------|-------------|
+| 🚀 **Alta Performance** | Consultas optimizadas y bajo impacto en recursos |
+| 🔄 **Formatos Múltiples** | Exportación en JSON y CSV para máxima compatibilidad |
+| 🔍 **Filtrado Avanzado** | Selección por cliente, fechas, tipo de datos |
+| 📊 **Análisis de Datos** | Facilita la comprensión de tendencias y patrones |
+| 🔗 **Integración Simple** | API RESTful con endpoints intuitivos |
+
+## 🏗 Arquitectura
+
+MSAD implementa una arquitectura minimalista y eficiente:
+
+```
+                    ┌───────────────────┐
+                    │                   │
+                    │   Flask Server    │
+                    │   (app.py)        │
+                    │                   │
+                    └─────────┬─────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────┐
+│                      MSAD                           │
+│                                                     │
+│  ┌───────────────┐         ┌────────────────────┐  │
+│  │               │         │                    │  │
+│  │  API Layer    │ ◄────► │     Core Layer     │  │
+│  │ simple_routes │         │ system + reports   │  │
+│  │               │         │                    │  │
+│  └───────────────┘         └────────────────────┘  │
+│          ▲                          │              │
+└──────────┼──────────────────────────┼──────────────┘
+           │                          ▼
+┌──────────┴──────────┐    ┌──────────────────────┐
+│                     │    │                      │
+│  Cliente/Frontend   │    │    Base de Datos     │
+│                     │    │    (SQLite)          │
+└─────────────────────┘    └──────────────────────┘
+```
+
+### 📁 Estructura de Código Simplificada
 
 ```
 msad/
-├── __init__.py           # Importación minimalista
+├── __init__.py           # Importación principal
 ├── api/
-│   ├── __init__.py       # Inicialización mínima
-│   └── simple_routes.py  # Endpoints RESTful simplificados
+│   ├── __init__.py       # Configuración API
+│   └── simple_routes.py  # Endpoints RESTful
 └── core/
-    ├── __init__.py       # Inicialización mínima
-    ├── reports.py        # Generación y gestión de reportes
-    └── system.py         # Funciones básicas del sistema
+    ├── __init__.py       # Configuración core
+    ├── reports.py        # Generación de reportes
+    └── system.py         # Funciones del sistema
 ```
 
-## API Reference
+## 🎯 Funcionalidades
 
-### 1. Estado del Servicio
+MSAD ofrece las siguientes funcionalidades clave para el monitoreo y análisis de cultivos:
 
-**Endpoint:** `GET /api/msad/status`
+### 📊 Generación de Reportes
 
-**Descripción:** Obtiene el estado actual del servicio MSAD.
+Extrae datos de la base de datos y genera reportes en formato JSON o CSV con información detallada sobre:
 
-**Respuesta:**
+- **Datos de Sensores**: Temperatura y humedad del ambiente de cultivo
+- **Acciones de Actuadores**: Registro de activaciones de ventiladores, humidificadores, etc.
+- **Eventos del Sistema**: Alertas, notificaciones y cambios de estado
+
+### 🔎 Consulta y Filtrado
+
+Permite búsqueda avanzada por:
+- **Cliente/Cultivo**: Filtra información por ubicación o proyecto específico
+- **Rango de Fechas**: Análisis de períodos concretos
+- **Tipo de Datos**: Enfoque en sensores, actuadores o eventos
+- **Formato**: Elección entre JSON para aplicaciones o CSV para análisis en hojas de cálculo
+
+### 💾 Gestión de Archivos
+
+- **Almacenamiento Optimizado**: Organiza reportes por cliente y tipo
+- **Descarga Directa**: Acceso simple a los archivos generados
+- **Listado de Reportes**: Visualización del historial de informes
+
+### 🔄 Backups Automáticos
+
+Protección integral de datos mediante:
+- **Backups Programados**: Copias de seguridad automáticas en intervalos configurables
+- **Backups Manuales**: Posibilidad de crear copias de seguridad bajo demanda
+- **Rotación Inteligente**: Mantiene un número limitado de backups para optimizar espacio
+- **Verificación de Integridad**: Comprueba la integridad de la base de datos antes de crear copias
+- **Restauración Segura**: Sistema de restauración con copia de seguridad previa
+- **Gestión Completa**: Interfaz API para listar, descargar y eliminar backups
+
+## 🔌 Integración con RaspServer
+
+MSAD se integra con RaspServer a través de los siguientes puntos:
+
+### 1️⃣ Registro de Blueprint
+
+En `app.py` se registra el blueprint de MSAD para habilitar los endpoints:
+
+```python
+from msad.api.simple_routes import create_msad_blueprint, create_export_blueprint
+
+# Crear y registrar los blueprints
+msad_bp = create_msad_blueprint()
+reports_bp = create_export_blueprint()
+
+app.register_blueprint(msad_bp, url_prefix='/api')
+app.register_blueprint(reports_bp, url_prefix='/api')
+```
+
+### 2️⃣ Acceso a Datos
+
+MSAD accede a la misma base de datos que utiliza RaspServer para los sensores:
+
+```python
+# En msad/core/system.py
+def get_database_path():
+    if os.name == 'nt':  # Windows
+        return os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(
+            os.path.abspath(__file__)))), "sensor_data.db")
+    else:  # Linux
+        return "/home/stevpi/Desktop/raspServer/sensor_data.db"
+```
+
+### 3️⃣ Flujo de Datos en RaspServer
+
+```
+┌─────────────────┐       ┌─────────────────┐       ┌─────────────────┐
+│                 │       │                 │       │                 │
+│  Sensores SHT3x │ ───► │  Base de Datos  │ ◄───  │  MSAD Reports   │
+│  (MQTT Client)  │       │   (SQLite)      │       │  (Exportación)  │
+│                 │       │                 │       │                 │
+└─────────────────┘       └─────────────────┘       └─────────────────┘
+                                   ▲
+                                   │
+                          ┌────────┴────────┐
+                          │                 │
+                          │  API Endpoints  │
+                          │  (Flask)        │
+                          │                 │
+                          └─────────────────┘
+                                   ▲
+                                   │
+                          ┌────────┴────────┐
+                          │                 │
+                          │  Cliente Web    │
+                          │  (Frontend)     │
+                          │                 │
+                          └─────────────────┘
+```
+
+## 📘 API Reference
+
+### 🟢 Estado del Servicio
+
+<table>
+<tr>
+<td><strong>Endpoint</strong></td>
+<td><code>GET /api/msad/status</code></td>
+</tr>
+<tr>
+<td><strong>Descripción</strong></td>
+<td>Obtiene el estado actual del servicio MSAD</td>
+</tr>
+<tr>
+<td><strong>Parámetros</strong></td>
+<td>Ninguno</td>
+</tr>
+<tr>
+<td><strong>Respuesta</strong></td>
+<td>
+
 ```json
 {
   "success": true,
@@ -57,13 +207,295 @@ msad/
 }
 ```
 
-### 2. Crear Datos de Prueba
+</td>
+</tr>
+</table>
 
-**Endpoint:** `POST /api/msad/test-data`
+### 🔷 Sistema de Backups
 
-**Descripción:** Inserta datos aleatorios para pruebas.
+#### 🔹 Listar Backups
 
-**Cuerpo de la Solicitud:**
+<table>
+<tr>
+<td><strong>Endpoint</strong></td>
+<td><code>GET /api/msad/backups</code></td>
+</tr>
+<tr>
+<td><strong>Descripción</strong></td>
+<td>Lista todos los backups disponibles de la base de datos</td>
+</tr>
+<tr>
+<td><strong>Parámetros Query</strong></td>
+<td>
+• <code>type</code> (opcional): Filtrar por tipo de backup ("manual" o "auto")
+</td>
+</tr>
+<tr>
+<td><strong>Respuesta</strong></td>
+<td>
+
+```json
+{
+  "success": true,
+  "backups": [
+    {
+      "backup_id": "backup_20230405_143020",
+      "filename": "sensor_data_manual_20230405_143020.db",
+      "type": "manual",
+      "size": 512000,
+      "created_at": "2023-04-05T14:30:20.123456",
+      "download_url": "/api/msad/backups/download/sensor_data_manual_20230405_143020.db"
+    }
+  ],
+  "total": 1
+}
+```
+
+</td>
+</tr>
+</table>
+
+#### 🔹 Crear Backup Manual
+
+<table>
+<tr>
+<td><strong>Endpoint</strong></td>
+<td><code>POST /api/msad/backups/create</code></td>
+</tr>
+<tr>
+<td><strong>Descripción</strong></td>
+<td>Crea un backup manual de la base de datos</td>
+</tr>
+<tr>
+<td><strong>Cuerpo</strong></td>
+<td>Ninguno</td>
+</tr>
+<tr>
+<td><strong>Respuesta</strong></td>
+<td>
+
+```json
+{
+  "success": true,
+  "backup_id": "backup_20230405_143020",
+  "filename": "sensor_data_manual_20230405_143020.db",
+  "path": "/mnt/storage/msad/backups/sensor_data_manual_20230405_143020.db",
+  "size": 512000,
+  "type": "manual",
+  "created_at": "2023-04-05T14:30:20.123456",
+  "download_url": "/api/msad/backups/download/sensor_data_manual_20230405_143020.db"
+}
+```
+
+</td>
+</tr>
+</table>
+
+#### 🔹 Descargar Backup
+
+<table>
+<tr>
+<td><strong>Endpoint</strong></td>
+<td><code>GET /api/msad/backups/download/{filename}</code></td>
+</tr>
+<tr>
+<td><strong>Descripción</strong></td>
+<td>Descarga un archivo de backup específico</td>
+</tr>
+<tr>
+<td><strong>Parámetros</strong></td>
+<td>
+• <code>filename</code>: Nombre del archivo de backup
+</td>
+</tr>
+<tr>
+<td><strong>Respuesta</strong></td>
+<td>
+• <strong>Éxito</strong>: Archivo binario de la base de datos de backup<br>
+• <strong>Content-Type</strong>: "application/octet-stream"<br>
+• <strong>Content-Disposition</strong>: attachment; filename="nombre_archivo"<br><br>
+En caso de error:
+```json
+{
+  "success": false,
+  "error": "Archivo de backup no encontrado"
+}
+```
+</td>
+</tr>
+</table>
+
+#### 🔹 Eliminar Backup
+
+<table>
+<tr>
+<td><strong>Endpoint</strong></td>
+<td><code>DELETE /api/msad/backups/{filename}</code></td>
+</tr>
+<tr>
+<td><strong>Descripción</strong></td>
+<td>Elimina un backup específico</td>
+</tr>
+<tr>
+<td><strong>Parámetros</strong></td>
+<td>
+• <code>filename</code>: Nombre del archivo de backup
+</td>
+</tr>
+<tr>
+<td><strong>Respuesta</strong></td>
+<td>
+
+```json
+{
+  "success": true,
+  "message": "Backup sensor_data_manual_20230405_143020.db eliminado correctamente"
+}
+```
+
+</td>
+</tr>
+</table>
+
+#### 🔹 Restaurar Backup
+
+<table>
+<tr>
+<td><strong>Endpoint</strong></td>
+<td><code>POST /api/msad/backups/restore/{filename}</code></td>
+</tr>
+<tr>
+<td><strong>Descripción</strong></td>
+<td>Restaura un backup a la base de datos actual</td>
+</tr>
+<tr>
+<td><strong>Parámetros</strong></td>
+<td>
+• <code>filename</code>: Nombre del archivo de backup
+</td>
+</tr>
+<tr>
+<td><strong>Respuesta</strong></td>
+<td>
+
+```json
+{
+  "success": true,
+  "message": "Backup sensor_data_manual_20230405_143020.db restaurado correctamente",
+  "safety_backup": "sensor_data_manual_20230406_103045.db"
+}
+```
+
+</td>
+</tr>
+</table>
+
+#### 🔹 Estado del Programador de Backups
+
+<table>
+<tr>
+<td><strong>Endpoint</strong></td>
+<td><code>GET /api/msad/backups/scheduler</code></td>
+</tr>
+<tr>
+<td><strong>Descripción</strong></td>
+<td>Obtiene el estado actual del programador de backups automáticos</td>
+</tr>
+<tr>
+<td><strong>Parámetros</strong></td>
+<td>Ninguno</td>
+</tr>
+<tr>
+<td><strong>Respuesta</strong></td>
+<td>
+
+```json
+{
+  "success": true,
+  "is_running": true,
+  "backup_count": 5,
+  "total_size": 2560000,
+  "formatted_size": "2.44 MB",
+  "last_backup": "2023-04-05T14:30:20.123456",
+  "next_backup": "2023-04-06T14:30:20.123456",
+  "backup_dir": "/mnt/storage/msad/backups"
+}
+```
+
+</td>
+</tr>
+</table>
+
+#### 🔹 Configurar Programador de Backups
+
+<table>
+<tr>
+<td><strong>Endpoint</strong></td>
+<td><code>POST /api/msad/backups/scheduler</code></td>
+</tr>
+<tr>
+<td><strong>Descripción</strong></td>
+<td>Configura el programador de backups automáticos</td>
+</tr>
+<tr>
+<td><strong>Cuerpo</strong></td>
+<td>
+
+```json
+{
+  "enabled": true,
+  "interval_hours": 24
+}
+```
+
+</td>
+</tr>
+<tr>
+<td><strong>Parámetros</strong></td>
+<td>
+• <code>enabled</code> (opcional): Activar/desactivar backups automáticos (default: true)<br>
+• <code>interval_hours</code> (opcional): Intervalo en horas entre backups (default: 24)
+</td>
+</tr>
+<tr>
+<td><strong>Respuesta</strong></td>
+<td>
+
+```json
+{
+  "success": true,
+  "message": "Programador de backups iniciado con intervalo de 24 horas",
+  "status": {
+    "is_running": true,
+    "backup_count": 5,
+    "total_size": 2560000,
+    "formatted_size": "2.44 MB",
+    "last_backup": "2023-04-05T14:30:20.123456",
+    "next_backup": "2023-04-06T14:30:20.123456",
+    "backup_dir": "/mnt/storage/msad/backups"
+  }
+}
+```
+
+</td>
+</tr>
+</table>
+
+### 🔵 Crear Datos de Prueba
+
+<table>
+<tr>
+<td><strong>Endpoint</strong></td>
+<td><code>POST /api/msad/test-data</code></td>
+</tr>
+<tr>
+<td><strong>Descripción</strong></td>
+<td>Inserta datos aleatorios para pruebas</td>
+</tr>
+<tr>
+<td><strong>Cuerpo</strong></td>
+<td>
+
 ```json
 {
   "client_id": "mushroom1",
@@ -71,11 +503,19 @@ msad/
 }
 ```
 
-**Parámetros:**
-- `client_id` (opcional): ID del cliente (por defecto: "mushroom1")
-- `count` (opcional): Número de registros a crear (por defecto: 10)
+</td>
+</tr>
+<tr>
+<td><strong>Parámetros</strong></td>
+<td>
+• <code>client_id</code> (opcional): ID del cliente (default: "mushroom1")<br>
+• <code>count</code> (opcional): Número de registros (default: 10)
+</td>
+</tr>
+<tr>
+<td><strong>Respuesta</strong></td>
+<td>
 
-**Respuesta:**
 ```json
 {
   "success": true,
@@ -84,13 +524,25 @@ msad/
 }
 ```
 
-### 3. Generar Reporte
+</td>
+</tr>
+</table>
 
-**Endpoint:** `POST /api/clients/{client_id}/msad/reports`
+### 🟠 Generar Reporte
 
-**Descripción:** Genera un reporte con los datos especificados.
+<table>
+<tr>
+<td><strong>Endpoint</strong></td>
+<td><code>POST /api/clients/{client_id}/msad/reports</code></td>
+</tr>
+<tr>
+<td><strong>Descripción</strong></td>
+<td>Genera un reporte con los datos especificados</td>
+</tr>
+<tr>
+<td><strong>Cuerpo</strong></td>
+<td>
 
-**Cuerpo de la Solicitud:**
 ```json
 {
   "start_date": "2025-01-01",
@@ -100,13 +552,21 @@ msad/
 }
 ```
 
-**Parámetros:**
-- `start_date` (obligatorio): Fecha inicial en formato YYYY-MM-DD
-- `end_date` (obligatorio): Fecha final en formato YYYY-MM-DD
-- `data_type` (opcional): Tipo de datos ("sensors", "events", "actuators")
-- `format` (opcional): Formato del archivo ("json", "csv")
+</td>
+</tr>
+<tr>
+<td><strong>Parámetros</strong></td>
+<td>
+• <code>start_date</code> (obligatorio): Fecha inicial (YYYY-MM-DD)<br>
+• <code>end_date</code> (obligatorio): Fecha final (YYYY-MM-DD)<br>
+• <code>data_type</code> (opcional): Tipo de datos ("sensors", "events", "actuators")<br>
+• <code>format</code> (opcional): Formato del archivo ("json", "csv")
+</td>
+</tr>
+<tr>
+<td><strong>Respuesta Exitosa</strong></td>
+<td>
 
-**Respuesta Exitosa:**
 ```json
 {
   "success": true,
@@ -126,17 +586,49 @@ msad/
 }
 ```
 
-### 4. Listar Reportes de un Cliente
+</td>
+</tr>
+<tr>
+<td><strong>Respuesta Error</strong></td>
+<td>
 
-**Endpoint:** `GET /api/clients/{client_id}/msad/reports`
+```json
+{
+  "success": false,
+  "error": "No se encontraron datos para el rango especificado"
+}
+```
 
-**Descripción:** Lista todos los reportes disponibles para un cliente específico.
+</td>
+</tr>
+</table>
 
-**Parámetros de Consulta:**
-- `format` (opcional): Filtrar por formato ("json", "csv")
-- `data_type` (opcional): Filtrar por tipo de datos ("sensors", "events", "actuators")
+### 🟣 Listar Reportes de un Cliente
 
-**Respuesta:**
+<table>
+<tr>
+<td><strong>Endpoint</strong></td>
+<td><code>GET /api/clients/{client_id}/msad/reports</code></td>
+</tr>
+<tr>
+<td><strong>Descripción</strong></td>
+<td>Lista todos los reportes disponibles para un cliente específico</td>
+</tr>
+<tr>
+<td><strong>Parámetros Query</strong></td>
+<td>
+• <code>format</code> (opcional): Filtrar por formato ("json", "csv")<br>
+• <code>data_type</code> (opcional): Filtrar por tipo de datos ("sensors", "events", "actuators")
+</td>
+</tr>
+<tr>
+<td><strong>Ejemplo</strong></td>
+<td><code>GET /api/clients/mushroom1/msad/reports?format=json&data_type=sensors</code></td>
+</tr>
+<tr>
+<td><strong>Respuesta</strong></td>
+<td>
+
 ```json
 {
   "success": true,
@@ -156,58 +648,149 @@ msad/
 }
 ```
 
-### 5. Listar Todos los Reportes
+</td>
+</tr>
+</table>
 
-**Endpoint:** `GET /api/msad/reports`
+### 🔴 Listar Todos los Reportes
 
-**Descripción:** Lista todos los reportes disponibles para todos los clientes.
+<table>
+<tr>
+<td><strong>Endpoint</strong></td>
+<td><code>GET /api/msad/reports</code></td>
+</tr>
+<tr>
+<td><strong>Descripción</strong></td>
+<td>Lista todos los reportes disponibles para todos los clientes</td>
+</tr>
+<tr>
+<td><strong>Parámetros Query</strong></td>
+<td>
+• <code>format</code> (opcional): Filtrar por formato ("json", "csv")<br>
+• <code>data_type</code> (opcional): Filtrar por tipo de datos ("sensors", "events", "actuators")
+</td>
+</tr>
+<tr>
+<td><strong>Respuesta</strong></td>
+<td>Similar a la del endpoint anterior, pero incluye reportes de todos los clientes</td>
+</tr>
+</table>
 
-**Parámetros de Consulta:**
-- `format` (opcional): Filtrar por formato ("json", "csv")
-- `data_type` (opcional): Filtrar por tipo de datos ("sensors", "events", "actuators")
+### ⚪ Descargar Reporte
 
-**Respuesta:** Similar a la del endpoint 4, pero incluyendo reportes de todos los clientes.
+<table>
+<tr>
+<td><strong>Endpoint</strong></td>
+<td><code>GET /api/clients/{client_id}/msad/reports/download/{filename}</code></td>
+</tr>
+<tr>
+<td><strong>Descripción</strong></td>
+<td>Descarga un archivo de reporte específico</td>
+</tr>
+<tr>
+<td><strong>Parámetros</strong></td>
+<td>
+• <code>client_id</code>: ID del cliente<br>
+• <code>filename</code>: Nombre del archivo a descargar
+</td>
+</tr>
+<tr>
+<td><strong>Respuesta</strong></td>
+<td>
+• <strong>Éxito</strong>: Archivo binario con el contenido del reporte<br>
+• <strong>Content-Type</strong>: "application/json" o "text/csv" según el formato<br>
+• <strong>Content-Disposition</strong>: attachment; filename="nombre_archivo"<br><br>
+En caso de error:
+```json
+{
+  "success": false,
+  "error": "Archivo no encontrado"
+}
+```
+</td>
+</tr>
+</table>
 
-### 6. Descargar Reporte
+## 📋 Tabla de Tipos de Datos y Formatos
 
-**Endpoint:** `GET /api/clients/{client_id}/msad/reports/download/{filename}`
+<table>
+<tr>
+<th colspan="2">Tipos de Datos Disponibles</th>
+</tr>
+<tr>
+<td><strong>Valor</strong></td>
+<td><strong>Descripción</strong></td>
+</tr>
+<tr>
+<td><code>sensors</code></td>
+<td>Datos de sensores SHT3x (temperatura y humedad)</td>
+</tr>
+<tr>
+<td><code>events</code></td>
+<td>Eventos del sistema y alertas</td>
+</tr>
+<tr>
+<td><code>actuators</code></td>
+<td>Acciones de actuadores (ventiladores, iluminación, etc.)</td>
+</tr>
 
-**Descripción:** Descarga un archivo de reporte específico.
+<tr>
+<th colspan="2">Formatos de Reporte</th>
+</tr>
+<tr>
+<td><strong>Valor</strong></td>
+<td><strong>Descripción</strong></td>
+</tr>
+<tr>
+<td><code>json</code></td>
+<td>Formato JSON estructurado (ideal para aplicaciones)</td>
+</tr>
+<tr>
+<td><code>csv</code></td>
+<td>Formato CSV para importación en hojas de cálculo</td>
+</tr>
+</table>
 
-**Parámetros:**
-- `client_id`: ID del cliente
-- `filename`: Nombre del archivo a descargar
+## 🚀 Ejemplos Prácticos
 
-**Respuesta:** Archivo binario con el contenido del reporte.
+### 📡 Consulta de Estado
 
-## Tipos de Datos
-
-Los valores disponibles para el parámetro `data_type` son:
-
-| Valor | Descripción |
-|-------|-------------|
-| `sensors` | Datos de sensores SHT3x (temperatura y humedad) |
-| `events` | Eventos del sistema |
-| `actuators` | Acciones de los actuadores |
-
-## Formatos de Reporte
-
-Los valores disponibles para el parámetro `format` son:
-
-| Valor | Descripción |
-|-------|-------------|
-| `json` | Formato JSON estructurado |
-| `csv` | Formato CSV para importación en hojas de cálculo |
-
-## Ejemplos de Uso
-
-### Ejemplo 1: Consulta de Estado
 ```bash
+# Verificar que el servicio esté activo
 curl -X GET http://192.168.137.214:5000/api/msad/status
+
+# Respuesta esperada:
+# {
+#   "success": true,
+#   "service": "msad",
+#   "version": "1.0.0-minimal",
+#   "status": "running"
+# }
 ```
 
-### Ejemplo 2: Creación de Reporte
+### 🧪 Creación de Datos de Prueba
+
 ```bash
+# Generar 30 registros para el cliente "mushroom1"
+curl -X POST http://192.168.137.214:5000/api/msad/test-data \
+  -H "Content-Type: application/json" \
+  -d '{
+    "client_id": "mushroom1",
+    "count": 30
+  }'
+
+# Respuesta esperada:
+# {
+#   "success": true,
+#   "message": "Se insertaron 30 registros de prueba para el cliente mushroom1",
+#   "count": 30
+# }
+```
+
+### 📊 Generación de Reportes
+
+```bash
+# Crear un reporte JSON para un período específico
 curl -X POST http://192.168.137.214:5000/api/clients/mushroom1/msad/reports \
   -H "Content-Type: application/json" \
   -d '{
@@ -216,46 +799,312 @@ curl -X POST http://192.168.137.214:5000/api/clients/mushroom1/msad/reports \
     "data_type": "sensors",
     "format": "json"
   }'
+
+# Crear un reporte CSV para análisis en Excel
+curl -X POST http://192.168.137.214:5000/api/clients/mushroom1/msad/reports \
+  -H "Content-Type: application/json" \
+  -d '{
+    "start_date": "2025-01-01",
+    "end_date": "2025-05-01",
+    "data_type": "sensors",
+    "format": "csv"
+  }'
 ```
 
-### Ejemplo 3: Obtener Reportes Filtrados
+### 🔎 Filtrado de Reportes
+
 ```bash
+# Listar solo reportes JSON
+curl -X GET "http://192.168.137.214:5000/api/clients/mushroom1/msad/reports?format=json"
+
+# Listar solo reportes de eventos
+curl -X GET "http://192.168.137.214:5000/api/clients/mushroom1/msad/reports?data_type=events"
+
+# Combinando múltiples filtros
 curl -X GET "http://192.168.137.214:5000/api/clients/mushroom1/msad/reports?format=json&data_type=sensors"
 ```
 
-## Instalación
+### 💾 Descarga de Reportes
 
-MSAD se integra automáticamente con el servidor Flask principal de RaspServer. No requiere instalación adicional.
-
-## Desarrollo
-
-Para extender la funcionalidad de MSAD, se recomienda:
-
-1. Añadir nuevas funciones en `msad/core/reports.py` para tipos de reportes adicionales
-2. Extender `msad/api/simple_routes.py` para añadir nuevos endpoints
-3. Mantener la simplicidad y evitar dependencias innecesarias
-
-## Almacenamiento
-
-Los reportes generados se almacenan en la estructura:
-```
-/mnt/storage/msad/reports/{client_id}/{filename}
+```bash
+# Descargar un reporte específico
+curl -X GET -O "http://192.168.137.214:5000/api/clients/mushroom1/msad/reports/download/mushroom1_sensors_2025-01-01_to_2025-05-01_20250405_022020.json"
 ```
 
-En sistemas Windows (desarrollo), la ruta equivalente es:
+### 💾 Gestión de Backups
+
+```bash
+# Listar todos los backups disponibles
+curl -X GET "http://192.168.137.214:5000/api/msad/backups"
+
+# Filtrar solo backups manuales
+curl -X GET "http://192.168.137.214:5000/api/msad/backups?type=manual"
+
+# Crear un backup manual
+curl -X POST "http://192.168.137.214:5000/api/msad/backups/create"
+
+# Descargar un backup específico
+curl -X GET -O "http://192.168.137.214:5000/api/msad/backups/download/sensor_data_manual_20230405_143020.db"
+
+# Eliminar un backup
+curl -X DELETE "http://192.168.137.214:5000/api/msad/backups/sensor_data_manual_20230405_143020.db"
+
+# Restaurar un backup
+curl -X POST "http://192.168.137.214:5000/api/msad/backups/restore/sensor_data_manual_20230405_143020.db"
+```
+
+### ⏱️ Configuración de Backups Automáticos
+
+```bash
+# Obtener estado actual del programador de backups
+curl -X GET "http://192.168.137.214:5000/api/msad/backups/scheduler"
+
+# Configurar backups automáticos cada 12 horas
+curl -X POST "http://192.168.137.214:5000/api/msad/backups/scheduler" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "enabled": true,
+    "interval_hours": 12
+  }'
+
+# Desactivar backups automáticos
+curl -X POST "http://192.168.137.214:5000/api/msad/backups/scheduler" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "enabled": false
+  }'
+```
+
+## 📂 Esquema de Almacenamiento
+
+Los reportes y backups se organizan en una estructura jerárquica para facilitar su acceso y gestión:
+
+```
+┌─ /mnt/storage/msad/
+│  │
+│  ├─ reports/
+│  │  │
+│  │  ├─ mushroom1/
+│  │  │  ├─ mushroom1_sensors_2025-01-01_to_2025-05-01_20250405_022020.json
+│  │  │  ├─ mushroom1_events_2025-02-01_to_2025-03-01_20250406_103045.csv
+│  │  │  └─ ...
+│  │  │
+│  │  ├─ mushroom2/
+│  │  │  ├─ mushroom2_sensors_2025-01-15_to_2025-02-15_20250410_143020.json
+│  │  │  └─ ...
+│  │  │
+│  │  └─ ...
+│  │
+│  ├─ backups/
+│  │  ├─ sensor_data_auto_20230401_000000.db
+│  │  ├─ sensor_data_manual_20230405_143020.db
+│  │  └─ ...
+│  │
+│  └─ logs/
+│     └─ msad.log
+```
+
+**En desarrollo (Windows):**
 ```
 RaspServer/storage/msad/reports/{client_id}/{filename}
+RaspServer/storage/msad/backups/{filename}
 ```
 
-## Solución de Problemas
+**En producción (Linux):**
+```
+/mnt/storage/msad/reports/{client_id}/{filename}
+/mnt/storage/msad/backups/{filename}
+```
 
-Si experimentas problemas con los reportes:
+## 🔄 Flujo de Trabajo
 
-1. Verifica que haya datos para el cliente y rango de fechas especificado
-2. Asegúrate de usar el formato correcto de fechas (YYYY-MM-DD)
-3. Revisa los logs en `/mnt/storage/msad/logs/msad.log`
-4. Usa el endpoint `/api/msad/test-data` para generar datos de prueba
+El siguiente diagrama muestra los flujos de trabajo principales en MSAD:
 
-## Licencia
+### 📊 Generación y Consulta de Reportes
 
-Este componente forma parte de RaspServer y está sujeto a la misma licencia del proyecto principal. 
+```
+┌──────────────┐      ┌──────────────────┐      ┌───────────────────┐
+│              │      │                  │      │                   │
+│ 1. Verificar │      │ 2. Generar datos │      │ 3. Crear reporte  │
+│    estado    │ ───► │    de prueba     │ ───► │    con filtros    │
+│              │      │    (opcional)    │      │                   │
+└──────────────┘      └──────────────────┘      └─────────┬─────────┘
+                                                          │
+                                                          ▼
+┌──────────────┐      ┌──────────────────┐      ┌───────────────────┐
+│              │      │                  │      │                   │
+│ 6. Analizar  │      │ 5. Descargar     │      │ 4. Listar         │
+│    datos     │ ◄─── │    reporte       │ ◄─── │    reportes       │
+│              │      │                  │      │                   │
+└──────────────┘      └──────────────────┘      └───────────────────┘
+```
+
+### 💾 Proceso de Backup y Restauración
+
+```
+┌──────────────┐      ┌──────────────────┐      ┌───────────────────┐
+│              │      │                  │      │                   │
+│ 1. Configurar│      │ 2. Crear backup  │      │ 3. Listar         │
+│   scheduler  │ ───► │    manual/auto   │ ───► │    backups        │
+│              │      │                  │      │                   │
+└──────────────┘      └──────────────────┘      └─────────┬─────────┘
+                                                          │
+                                                          ▼
+                      ┌──────────────────┐      ┌───────────────────┐
+                      │                  │      │                   │
+                      │ 5. Restaurar     │ ◄─── │ 4. Descargar      │
+                      │    backup        │      │    backup         │
+                      │    (si necesario)│      │    (si necesario) │
+                      └──────────────────┘      └───────────────────┘
+```
+
+## ❓ Solución de Problemas
+
+<table>
+<tr>
+<th>Problema</th>
+<th>Causa Probable</th>
+<th>Solución</th>
+</tr>
+<tr>
+<td>"No se encontraron datos para el rango especificado"</td>
+<td>No hay datos en el rango de fechas seleccionado</td>
+<td>
+• Verifica que el rango de fechas sea correcto<br>
+• Crea datos de prueba con el endpoint <code>/api/msad/test-data</code><br>
+• Asegúrate de que el cliente existe en la base de datos
+</td>
+</tr>
+<tr>
+<td>"Error al consultar la base de datos"</td>
+<td>Problema al acceder a la base de datos</td>
+<td>
+• Verifica que la base de datos existe en la ruta correcta<br>
+• Asegúrate de que no haya bloqueos en la BD<br>
+• Revisa los logs en <code>/mnt/storage/msad/logs/msad.log</code>
+</td>
+</tr>
+<tr>
+<td>"Archivo no encontrado" al descargar</td>
+<td>El archivo solicitado no existe o fue eliminado</td>
+<td>
+• Verifica que el nombre de archivo sea correcto<br>
+• Comprueba que el directorio de almacenamiento existe<br>
+• Regenera el reporte si es necesario
+</td>
+</tr>
+<tr>
+<td>Error en el formato de fecha</td>
+<td>Formato de fecha incorrecto</td>
+<td>
+• Usa el formato YYYY-MM-DD (ejemplo: 2025-05-01)<br>
+• Asegúrate de que la fecha final sea posterior a la inicial
+</td>
+</tr>
+<tr>
+<td>"La base de datos está corrupta y no se puede realizar el backup"</td>
+<td>Problemas de integridad en la base de datos</td>
+<td>
+• Restaura un backup previo si está disponible<br>
+• Verifica los permisos de la base de datos<br>
+• Ejecuta <code>PRAGMA integrity_check</code> directamente en la BD
+</td>
+</tr>
+<tr>
+<td>El programador de backups no inicia</td>
+<td>Problemas con la biblioteca schedule o permisos</td>
+<td>
+• Verifica que schedule está instalado (<code>pip install schedule</code>)<br>
+• Revisa los logs en busca de errores detallados<br>
+• Verifica que el directorio de backups tiene permisos de escritura
+</td>
+</tr>
+<tr>
+<td>No se pueden restaurar backups</td>
+<td>Problemas de permisos o base de datos en uso</td>
+<td>
+• Asegúrate de que la base de datos no está siendo usada por otro proceso<br>
+• Verifica que el usuario tiene permisos de escritura<br>
+• Intenta detener y reiniciar el servidor antes de restaurar
+</td>
+</tr>
+</table>
+
+## 🔮 Desarrollo Futuro
+
+### Posibles Mejoras Futuras
+
+- **Exportación a más formatos**: PDF, XLSX para reportes más formales
+- **Análisis estadístico incorporado**: Agregar estadísticas básicas a los reportes
+- **Reportes programados**: Generación automática periódica
+- **Notificaciones**: Avisos por email al completarse reportes extensos
+- **Compresión**: Compresión automática de reportes grandes
+- **Visualizaciones**: Generar gráficos básicos junto con los datos
+
+### Extensión de Código
+
+Para añadir nuevas funcionalidades:
+
+```python
+# En msad/core/reports.py - Añadir nuevo tipo de reporte:
+def generate_statistics_report(client_id, start_date, end_date, format="json"):
+    """
+    Generar reporte de estadísticas para un cliente en un rango de fechas
+    """
+    # Implementación
+    pass
+
+# En msad/api/simple_routes.py - Añadir nuevo endpoint:
+@reports_bp.route('/clients/<client_id>/msad/statistics', methods=['POST'])
+def create_statistics_report(client_id):
+    """Endpoint para crear estadísticas"""
+    # Implementación
+    pass
+```
+
+## 💻 Instalación y Requisitos
+
+Para instalar y utilizar el sistema de backups automáticos, asegúrate de cumplir con los siguientes requisitos:
+
+### Dependencias
+
+```bash
+# Instalar dependencias
+pip install flask aiosqlite paho-mqtt schedule
+```
+
+El archivo `requirements.txt` incluye todas las dependencias necesarias:
+
+```
+flask>=2.0.0
+aiosqlite>=0.17.0
+paho-mqtt>=1.5.0
+schedule>=1.1.0  # Para backups automáticos programados
+```
+
+### Activar Backups Automáticos
+
+Para habilitar los backups automáticos al iniciar la aplicación, modifica la línea en `app.py` donde se inicializa MSAD:
+
+```python
+# Inicializar MSAD con backups automáticos cada 24 horas
+status = init_msad(auto_backup=True, backup_interval_hours=24)
+```
+
+### Permisos de Directorios
+
+Asegúrate de que la aplicación tenga permisos de escritura en los directorios de almacenamiento:
+
+```bash
+# En sistemas Linux/Raspberry Pi
+sudo mkdir -p /mnt/storage/msad/backups
+sudo chown -R [usuario]:users /mnt/storage/msad
+```
+
+---
+
+<div align="center">
+   
+   **MSAD** - Documentación v1.0.0 - Desarrollado para RaspServer
+
+</div> 

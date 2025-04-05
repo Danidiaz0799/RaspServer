@@ -16,7 +16,10 @@ from models.sensor_data import cleanup
 import atexit
 from database import create_tables
 # Integración con MSAD
-from msad import init_msad, shutdown_msad, create_msad_blueprint, create_export_blueprint
+from msad import (
+    init_msad, shutdown_msad, 
+    create_system_blueprint, create_backup_blueprint, create_report_blueprint
+)
 
 # Configuracion de la carpeta donde esta la app Angular
 ANGULAR_BUILD_FOLDER = "/home/stevpi/Desktop/raspServer/angular_app/dist/mushroom-automation"
@@ -48,13 +51,14 @@ app.register_blueprint(app_state_bp, url_prefix='/api')
 app.register_blueprint(statistics_bp, url_prefix='/api')
 # app.register_blueprint(msad_bp, url_prefix='/api')  # Comentamos esta línea porque ya no existe msad_bp
 
-# Creamos y registramos el blueprint directamente
-msad_bp = create_msad_blueprint()
-app.register_blueprint(msad_bp, url_prefix='/api')
+# Registramos los blueprints de MSAD de forma modular
+system_bp = create_system_blueprint()
+backup_bp = create_backup_blueprint()
+report_bp = create_report_blueprint()
 
-# Registramos el blueprint de exportación
-export_bp = create_export_blueprint()
-app.register_blueprint(export_bp, url_prefix='/api')
+app.register_blueprint(system_bp, url_prefix='/api')
+app.register_blueprint(backup_bp, url_prefix='/api')
+app.register_blueprint(report_bp, url_prefix='/api')
 
 # Inicializar MSAD (Microservicio de Almacenamiento Distribuido)
 msad_status = init_msad(auto_backup=True, backup_interval_hours=24)

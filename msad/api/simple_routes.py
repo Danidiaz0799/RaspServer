@@ -6,6 +6,11 @@ import os
 
 from msad.core.system import logger, insert_test_data
 from msad.core.reports import generate_report, list_reports, get_report_file
+from msad.core.backup import (
+    init_backup_system, create_backup, list_backups, get_backup_file,
+    restore_backup, delete_backup, start_backup_scheduler, 
+    stop_backup_scheduler, get_backup_status
+)
 
 def create_msad_blueprint():
     """
@@ -36,6 +41,183 @@ def create_msad_blueprint():
             
         except Exception as e:
             logger.error(f"Error al crear datos de prueba: {str(e)}")
+            return jsonify({
+                "success": False,
+                "error": str(e)
+            }), 500
+    
+    @msad_bp.route('/msad/backups', methods=['GET'])
+    def get_backups():
+        """Endpoint para listar backups disponibles"""
+        try:
+            # Inicializar sistema de backups si es necesario
+            init_backup_system()
+            
+            # Obtener parámetros de filtrado opcionales
+            backup_type = request.args.get('type')  # 'manual' o 'auto'
+            
+            # Listar backups
+            result = list_backups(backup_type)
+            
+            return jsonify(result)
+            
+        except Exception as e:
+            logger.error(f"Error al listar backups: {str(e)}")
+            return jsonify({
+                "success": False,
+                "error": str(e)
+            }), 500
+    
+    @msad_bp.route('/msad/backups/create', methods=['POST'])
+    def backup_db():
+        """Endpoint para crear un backup manual"""
+        try:
+            # Inicializar sistema de backups si es necesario
+            init_backup_system()
+            
+            # Crear backup manual
+            result = create_backup(manual=True)
+            
+            if result.get("success", False):
+                return jsonify(result)
+            else:
+                return jsonify(result), 400
+                
+        except Exception as e:
+            logger.error(f"Error al crear backup: {str(e)}")
+            return jsonify({
+                "success": False,
+                "error": str(e)
+            }), 500
+    
+    @msad_bp.route('/msad/backups/download/<filename>', methods=['GET'])
+    def download_backup(filename):
+        """Endpoint para descargar un backup"""
+        try:
+            # Inicializar sistema de backups si es necesario
+            init_backup_system()
+            
+            # Obtener la ruta del archivo
+            file_path = get_backup_file(filename)
+            
+            if not file_path:
+                return jsonify({
+                    "success": False,
+                    "error": "Archivo de backup no encontrado"
+                }), 404
+                
+            # Enviar el archivo
+            return send_file(
+                file_path,
+                mimetype="application/octet-stream",
+                as_attachment=True,
+                download_name=filename
+            )
+                
+        except Exception as e:
+            logger.error(f"Error al descargar backup: {str(e)}")
+            return jsonify({
+                "success": False,
+                "error": str(e)
+            }), 500
+    
+    @msad_bp.route('/msad/backups/<filename>', methods=['DELETE'])
+    def remove_backup(filename):
+        """Endpoint para eliminar un backup"""
+        try:
+            # Inicializar sistema de backups si es necesario
+            init_backup_system()
+            
+            # Eliminar backup
+            result = delete_backup(filename)
+            
+            if result.get("success", False):
+                return jsonify(result)
+            else:
+                return jsonify(result), 404
+                
+        except Exception as e:
+            logger.error(f"Error al eliminar backup: {str(e)}")
+            return jsonify({
+                "success": False,
+                "error": str(e)
+            }), 500
+    
+    @msad_bp.route('/msad/backups/restore/<filename>', methods=['POST'])
+    def restore_db(filename):
+        """Endpoint para restaurar un backup"""
+        try:
+            # Inicializar sistema de backups si es necesario
+            init_backup_system()
+            
+            # Restaurar backup
+            result = restore_backup(filename)
+            
+            if result.get("success", False):
+                return jsonify(result)
+            else:
+                return jsonify(result), 400
+                
+        except Exception as e:
+            logger.error(f"Error al restaurar backup: {str(e)}")
+            return jsonify({
+                "success": False,
+                "error": str(e)
+            }), 500
+    
+    @msad_bp.route('/msad/backups/scheduler', methods=['GET'])
+    def get_scheduler_status():
+        """Endpoint para obtener el estado del programador de backups"""
+        try:
+            # Inicializar sistema de backups si es necesario
+            init_backup_system()
+            
+            # Obtener estado
+            result = get_backup_status()
+            
+            return jsonify(result)
+                
+        except Exception as e:
+            logger.error(f"Error al obtener estado del programador: {str(e)}")
+            return jsonify({
+                "success": False,
+                "error": str(e)
+            }), 500
+    
+    @msad_bp.route('/msad/backups/scheduler', methods=['POST'])
+    def configure_scheduler():
+        """Endpoint para configurar el programador de backups"""
+        try:
+            # Inicializar sistema de backups si es necesario
+            init_backup_system()
+            
+            # Obtener parámetros
+            data = request.json or {}
+            enabled = data.get('enabled', True)
+            interval_hours = int(data.get('interval_hours', 24))
+            
+            # Configurar programador
+            if enabled:
+                result = start_backup_scheduler(interval_hours)
+                message = f"Programador de backups iniciado con intervalo de {interval_hours} horas"
+            else:
+                result = stop_backup_scheduler()
+                message = "Programador de backups detenido"
+            
+            if result:
+                return jsonify({
+                    "success": True,
+                    "message": message,
+                    "status": get_backup_status()
+                })
+            else:
+                return jsonify({
+                    "success": False,
+                    "error": "Error al configurar programador de backups"
+                }), 400
+                
+        except Exception as e:
+            logger.error(f"Error al configurar programador: {str(e)}")
             return jsonify({
                 "success": False,
                 "error": str(e)

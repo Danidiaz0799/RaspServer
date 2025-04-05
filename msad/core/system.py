@@ -65,6 +65,21 @@ def init_msad(auto_backup=False, backup_interval_hours=24):
                 "message": f"Base de datos no encontrada en {db_path}"
             }
         
+        # Inicializar sistema de backups si está habilitado
+        if auto_backup:
+            # Importamos aquí para evitar dependencia circular
+            from msad.core.backup import init_backup_system, start_backup_scheduler
+            
+            # Inicializar sistema de backups
+            init_backup_system()
+            
+            # Iniciar programador de backups
+            backup_result = start_backup_scheduler(backup_interval_hours)
+            if backup_result:
+                logger.info(f"Sistema de backups automáticos iniciado (intervalo: {backup_interval_hours} horas)")
+            else:
+                logger.warning("No se pudo iniciar el sistema de backups automáticos")
+        
         logger.info("MSAD iniciado correctamente")
         return {
             "success": True,
@@ -82,10 +97,27 @@ def shutdown_msad():
     Detener MSAD de forma muy simple
     """
     logger.info("Deteniendo MSAD")
-    return {
-        "success": True,
-        "message": "MSAD detenido correctamente"
-    }
+    
+    try:
+        # Detener programador de backups si está en ejecución
+        try:
+            from msad.core.backup import stop_backup_scheduler
+            stop_backup_scheduler()
+        except ImportError:
+            pass  # El módulo puede no estar disponible
+        except Exception as e:
+            logger.error(f"Error al detener programador de backups: {str(e)}")
+            
+        return {
+            "success": True,
+            "message": "MSAD detenido correctamente"
+        }
+    except Exception as e:
+        logger.error(f"Error al detener MSAD: {str(e)}")
+        return {
+            "success": False,
+            "message": f"Error al detener MSAD: {str(e)}"
+        }
 
 def execute_query(query, params=(), fetchall=True):
     """
