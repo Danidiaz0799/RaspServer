@@ -757,7 +757,7 @@ En caso de error:
 
 ```bash
 # Verificar que el servicio esté activo
-curl -X GET http://192.168.137.214:5000/api/msad/status
+curl -X GET http://raspserver.local:5000/api/msad/status
 
 # Respuesta esperada:
 # {
@@ -772,7 +772,7 @@ curl -X GET http://192.168.137.214:5000/api/msad/status
 
 ```bash
 # Generar 30 registros para el cliente "mushroom1"
-curl -X POST http://192.168.137.214:5000/api/msad/test-data \
+curl -X POST http://raspserver.local:5000/api/msad/test-data \
   -H "Content-Type: application/json" \
   -d '{
     "client_id": "mushroom1",
@@ -791,7 +791,7 @@ curl -X POST http://192.168.137.214:5000/api/msad/test-data \
 
 ```bash
 # Crear un reporte JSON para un período específico
-curl -X POST http://192.168.137.214:5000/api/clients/mushroom1/msad/reports \
+curl -X POST http://raspserver.local:5000/api/clients/mushroom1/msad/reports \
   -H "Content-Type: application/json" \
   -d '{
     "start_date": "2025-01-01",
@@ -801,7 +801,7 @@ curl -X POST http://192.168.137.214:5000/api/clients/mushroom1/msad/reports \
   }'
 
 # Crear un reporte CSV para análisis en Excel
-curl -X POST http://192.168.137.214:5000/api/clients/mushroom1/msad/reports \
+curl -X POST http://raspserver.local:5000/api/clients/mushroom1/msad/reports \
   -H "Content-Type: application/json" \
   -d '{
     "start_date": "2025-01-01",
@@ -815,52 +815,52 @@ curl -X POST http://192.168.137.214:5000/api/clients/mushroom1/msad/reports \
 
 ```bash
 # Listar solo reportes JSON
-curl -X GET "http://192.168.137.214:5000/api/clients/mushroom1/msad/reports?format=json"
+curl -X GET "http://raspserver.local:5000/api/clients/mushroom1/msad/reports?format=json"
 
 # Listar solo reportes de eventos
-curl -X GET "http://192.168.137.214:5000/api/clients/mushroom1/msad/reports?data_type=events"
+curl -X GET "http://raspserver.local:5000/api/clients/mushroom1/msad/reports?data_type=events"
 
 # Combinando múltiples filtros
-curl -X GET "http://192.168.137.214:5000/api/clients/mushroom1/msad/reports?format=json&data_type=sensors"
+curl -X GET "http://raspserver.local:5000/api/clients/mushroom1/msad/reports?format=json&data_type=sensors"
 ```
 
 ### 💾 Descarga de Reportes
 
 ```bash
 # Descargar un reporte específico
-curl -X GET -O "http://192.168.137.214:5000/api/clients/mushroom1/msad/reports/download/mushroom1_sensors_2025-01-01_to_2025-05-01_20250405_022020.json"
+curl -X GET -O "http://raspserver.local:5000/api/clients/mushroom1/msad/reports/download/mushroom1_sensors_2025-01-01_to_2025-05-01_20250405_022020.json"
 ```
 
 ### 💾 Gestión de Backups
 
 ```bash
 # Listar todos los backups disponibles
-curl -X GET "http://192.168.137.214:5000/api/msad/backups"
+curl -X GET "http://raspserver.local:5000/api/msad/backups"
 
 # Filtrar solo backups manuales
-curl -X GET "http://192.168.137.214:5000/api/msad/backups?type=manual"
+curl -X GET "http://raspserver.local:5000/api/msad/backups?type=manual"
 
 # Crear un backup manual
-curl -X POST "http://192.168.137.214:5000/api/msad/backups/create"
+curl -X POST "http://raspserver.local:5000/api/msad/backups/create"
 
 # Descargar un backup específico
-curl -X GET -O "http://192.168.137.214:5000/api/msad/backups/download/sensor_data_manual_20230405_143020.db"
+curl -X GET -O "http://raspserver.local:5000/api/msad/backups/download/sensor_data_manual_20230405_143020.db"
 
 # Eliminar un backup
-curl -X DELETE "http://192.168.137.214:5000/api/msad/backups/sensor_data_manual_20230405_143020.db"
+curl -X DELETE "http://raspserver.local:5000/api/msad/backups/sensor_data_manual_20230405_143020.db"
 
 # Restaurar un backup
-curl -X POST "http://192.168.137.214:5000/api/msad/backups/restore/sensor_data_manual_20230405_143020.db"
+curl -X POST "http://raspserver.local:5000/api/msad/backups/restore/sensor_data_manual_20230405_143020.db"
 ```
 
 ### ⏱️ Configuración de Backups Automáticos
 
 ```bash
 # Obtener estado actual del programador de backups
-curl -X GET "http://192.168.137.214:5000/api/msad/backups/scheduler"
+curl -X GET "http://raspserver.local:5000/api/msad/backups/scheduler"
 
 # Configurar backups automáticos cada 12 horas
-curl -X POST "http://192.168.137.214:5000/api/msad/backups/scheduler" \
+curl -X POST "http://raspserver.local:5000/api/msad/backups/scheduler" \
   -H "Content-Type: application/json" \
   -d '{
     "enabled": true,
@@ -868,7 +868,7 @@ curl -X POST "http://192.168.137.214:5000/api/msad/backups/scheduler" \
   }'
 
 # Desactivar backups automáticos
-curl -X POST "http://192.168.137.214:5000/api/msad/backups/scheduler" \
+curl -X POST "http://raspserver.local:5000/api/msad/backups/scheduler" \
   -H "Content-Type: application/json" \
   -d '{
     "enabled": false
