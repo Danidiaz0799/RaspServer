@@ -4,11 +4,10 @@ Rutas simplificadas para MSAD
 from flask import Blueprint, jsonify, request, send_file
 import os
 
-from msad.core.system import logger, insert_test_data
 from msad.core.reports import generate_report, list_reports, get_report_file
 from msad.core.backup import (
     init_backup_system, create_backup, list_backups, get_backup_file,
-    restore_backup, delete_backup, start_backup_scheduler, 
+    restore_backup, delete_backup, start_backup_scheduler,
     stop_backup_scheduler, get_backup_status
 )
 
@@ -27,24 +26,6 @@ def create_msad_blueprint():
             "version": "1.0.0-minimal",
             "status": "running"
         })
-    
-    @msad_bp.route('/msad/test-data', methods=['POST'])
-    def create_test_data():
-        """Endpoint para crear datos de prueba"""
-        try:
-            data = request.json or {}
-            client_id = data.get('client_id', 'mushroom1')
-            count = int(data.get('count', 10))
-            
-            result = insert_test_data(client_id, count)
-            return jsonify(result)
-            
-        except Exception as e:
-            logger.error(f"Error al crear datos de prueba: {str(e)}")
-            return jsonify({
-                "success": False,
-                "error": str(e)
-            }), 500
     
     @msad_bp.route('/msad/backups', methods=['GET'])
     def get_backups():
